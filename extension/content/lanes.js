@@ -87,6 +87,11 @@
     return strippable(row) && row.dataset.prlanesActor === 'bot';
   }
 
+  // A run only folds what the bots button would otherwise put away whole.
+  function foldable(row) {
+    return botComment(row) && !row.dataset.prlanesLatest;
+  }
+
   // The button sets the default; a strip or a Hide of your own overrides it for that run alone.
   function wantsOpen(leader) {
     const want = leader.dataset.prlanesWant;
@@ -166,12 +171,17 @@
   }
 
   // Back-to-back comments from the same bot are one thing to read, so they are one thing to fold.
-  function foldRuns(rows) {
+  function foldRuns(allRows) {
+    // A stale verdict is gone altogether, so it does not split the runs either side of it.
+    const rows = allRows.filter((row) => row.dataset.prlanesLatest !== 'stale');
+    for (const row of allRows) {
+      if (row.dataset.prlanesLatest === 'stale') delete row.dataset.prlanesFold;
+    }
     let index = 0;
 
     while (index < rows.length) {
       const leader = rows[index];
-      if (!botComment(leader)) {
+      if (!foldable(leader)) {
         delete leader.dataset.prlanesFold;
         index += 1;
         continue;
@@ -179,7 +189,7 @@
 
       const login = leader.dataset.prlanesLogin || '';
       let end = index + 1;
-      while (end < rows.length && botComment(rows[end]) && (rows[end].dataset.prlanesLogin || '') === login) end += 1;
+      while (end < rows.length && foldable(rows[end]) && (rows[end].dataset.prlanesLogin || '') === login) end += 1;
 
       const run = end - index;
       const open = wantsOpen(leader);
@@ -198,6 +208,24 @@
       }
 
       index = end;
+    }
+  }
+
+  // Some bots post a fresh verdict on every push, and only the newest one still says anything.
+  // Their earlier comments and reviews go altogether while the bots are hidden; the latest stays whole.
+  function markLatest(rows) {
+    const latest = new Map();
+    const candidates = new Set(rows.filter((row) =>
+      row.dataset.prlanesActor === 'bot' &&
+      row.dataset.prlanesForm === 'comment' &&
+      row.dataset.prlanesPin !== '1' &&
+      rules.latestOnly.has(row.dataset.prlanesLogin || '')
+    ));
+    for (const row of candidates) latest.set(row.dataset.prlanesLogin, row);
+
+    for (const row of rows) {
+      if (!candidates.has(row)) delete row.dataset.prlanesLatest;
+      else setData(row, 'prlanesLatest', latest.get(row.dataset.prlanesLogin) === row ? 'latest' : 'stale');
     }
   }
 
@@ -221,9 +249,13 @@
         else delete row.dataset.prlanesKeep;
         fillStrip(row, kind);
       }
+    }
 
+    markLatest(rows);
+
+    for (const row of rows) {
       const form = row.dataset.prlanesForm;
-      if (row.dataset.prlanesPin === '1' || row.dataset.prlanesKeep === '1') continue;
+      if (row.dataset.prlanesPin === '1' || row.dataset.prlanesKeep === '1' || row.dataset.prlanesLatest === 'latest') continue;
       if (form === 'comment' && row.dataset.prlanesActor === 'bot') counts.bots += 1;
       if (form === 'event' || form === 'commit') counts.events += 1;
     }

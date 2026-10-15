@@ -286,6 +286,11 @@ if (process.argv.includes('--serve')) {
       'and so does a bot change request with no comment');
     assert.deepEqual(quiet.rows['bot-reviewed'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
       'a bot review that only commented folds like its comments');
+    // A bot set to show only its latest loses the earlier verdicts altogether and keeps the newest whole.
+    assert.deepEqual(quiet.rows['stamphog-old'], uncollapsed({ actor: 'bot', form: 'comment', pinned: false, visible: false }),
+      'an earlier stamphog verdict goes altogether');
+    assert.deepEqual(quiet.rows['stamphog-new'], uncollapsed({ actor: 'bot', form: 'comment', pinned: false, visible: true }),
+      'and its latest stays whole, though a comment-only review would otherwise fold');
 
     // Commits belong to nobody, so hiding bots never takes them.
     assert.deepEqual(quiet.rows['human-commit'], uncollapsed({ actor: 'none', form: 'commit', pinned: false, visible: true }));
@@ -400,9 +405,18 @@ if (process.argv.includes('--serve')) {
     await settings({ keepBotApprovals: true, keepBotChangeRequests: true, keepBotReviewComments: false });
     await until('the default bot reviews to come back', (state) => state.rows['bot-approval'].fold === null && state.rows['bot-reviewed'].fold === 'strip');
 
+    // Cleared, the list stops singling a bot out and its verdicts fold into one run like any other.
+    await settings({ latestOnlyBots: '' });
+    const everyVerdict = await until('every stamphog verdict to fold', (state) => state.rows['stamphog-old'].fold === 'strip');
+    assert.equal(everyVerdict.rows['stamphog-new'].fold, 'gone', 'the latest joins the earlier one\'s run');
+    assert.equal(everyVerdict.strips['stamphog-old'].more, '+1 more');
+    await settings({ latestOnlyBots: 'stamphog' });
+    await until('only the latest stamphog verdict to come back', (state) => !state.rows['stamphog-old'].visible && state.rows['stamphog-new'].fold === null);
+
     await clickToggle('bots');
     const eventsOnly = await until('the bots to come back while events stay hidden', (state) => !state.hiding.bots.on);
     assert.equal(eventsOnly.rows['bot-comment'].fold, 'open');
+    assert.equal(eventsOnly.rows['stamphog-old'].visible, true, 'with the bots shown, every stamphog verdict is back');
     assert.equal(eventsOnly.rows['bot-event'].visible, false, 'a bot event is an event either way');
     assert.equal(eventsOnly.rows['human-commit'].visible, false, 'eventsOnly: commit gone');
 

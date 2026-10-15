@@ -10,7 +10,7 @@ What people say is never hidden. The two buttons turn off everything else, indep
 
 **Hide bots** takes out everything posted by apps, CI and review bots: their comments, the timeline events they generate, and their rows in the **Reviewers** sidebar, so the list shows the people whose review you are actually waiting on. Suggested reviewers are left alone: nobody is waiting on a review that has not been asked for. A hidden bot comment does not vanish. It shrinks to a single line carrying the bot's avatar, its name and the opening of what it wrote, and back-to-back comments from the same bot share one line between them. Click it to read them; a **Hide** in the avatar gutter folds them away again. That Hide is there whenever a bot comment is showing, so you can fold one bot's run without putting every bot away.
 
-**Hide events** takes out the timeline itself: labels, commits, merges, whoever caused them. Reviews are not events: a person's approval stays even when it came with no comment. A bot's review goes with its comments under **Hide bots**, except the kinds you keep in the settings; by default its approvals and change requests stay and its comment-only reviews fold.
+**Hide events** takes out the timeline itself: labels, commits, merges, whoever caused them. Reviews are not events: a person's approval stays even when it came with no comment. A bot's review goes with its comments under **Hide bots**, except the kinds you keep in the settings; by default its approvals and change requests stay and its comment-only reviews fold. A bot that posts a fresh verdict on every push, like StampHog, can be set to show only its latest: the earlier ones go altogether and the newest stays in full.
 
 Press `b` and `e` to work the buttons from the keyboard; both are ignored while you are typing in a comment box. The bot filter also applies to inline review threads on the **Files changed** tab. Commits belong to nobody, so hiding bots never takes them and a push can still be read against the bot comment it answers. Nothing useful disappears: the pull request description and the comment box survive both buttons, and a thread a bot started but a person replied to counts as a person's, bot comment and all.
 
@@ -28,6 +28,7 @@ Both buttons live on the conversation, not in here. These settings decide where 
 | Keep bot approvals | on | A bot's approval stays in full while **Hide bots** is on |
 | Keep bot change requests | on | So does a bot's change request |
 | Keep bot reviews that only commented | off | A bot's comment-only review folds with its other comments unless this is on |
+| Show only the latest from these bots | `stamphog` | Logins whose earlier comments and reviews go altogether while **Hide bots** is on, leaving their latest in full. Clear it to fold them like any other bot |
 | Remember per repository | off | Keep a separate choice for each repo instead of one setting everywhere |
 | Hide resolved PR review threads | off | Threads somebody has already resolved drop out, whatever the buttons say |
 | Extra bot accounts | none | Logins that post through a token and look human |

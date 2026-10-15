@@ -10,12 +10,13 @@
     keepBotApprovals: true,
     keepBotChangeRequests: true,
     keepBotReviewComments: false,
+    latestOnlyBots: 'stamphog',
     extraBots: '',
     forceHumans: '',
     heuristics: true
   };
 
-  const CLASSIFICATION_KEYS = ['extraBots', 'forceHumans', 'heuristics'];
+  const CLASSIFICATION_KEYS = ['extraBots', 'forceHumans', 'heuristics', 'latestOnlyBots'];
 
   const DEFAULT_BOT_LOGINS = [
     'allcontributors',
@@ -194,7 +195,8 @@
     return {
       bots: new Set(DEFAULT_BOT_LOGINS.concat(parseLoginList(options.extraBots))),
       humans: new Set(parseLoginList(options.forceHumans)),
-      heuristics: options.heuristics !== false
+      heuristics: options.heuristics !== false,
+      latestOnly: new Set(parseLoginList(options.latestOnlyBots))
     };
   }
 
