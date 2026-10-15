@@ -292,6 +292,8 @@ if (process.argv.includes('--serve')) {
     assert.deepEqual(quiet.rows['bot-changes'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
       'and so does a bot change request with no comment');
     assert.equal(quiet.strips['bot-changes'].preview, 'requested changes');
+    assert.equal(quiet.rows['bot-suggested'].fold, 'strip', 'a change request from a bot without write access is kept too');
+    assert.equal(quiet.strips['bot-suggested'].preview, 'requested changes', 'though GitHub draws it with an eye');
     // The sidebar agrees: a bot whose approval is kept stays among the reviewers.
     assert.deepEqual(quiet.rows['reviewer-approving-bot'], uncollapsed({ actor: 'bot', form: 'reviewer', pinned: false, visible: true }),
       'a kept bot approval stays in the Reviewers sidebar too');

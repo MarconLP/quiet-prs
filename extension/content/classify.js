@@ -122,6 +122,13 @@
     ['commented', '.octicon-eye']
   ];
 
+  // A reviewer without write access gets the eye whatever they decided, so the header line has to
+  // say it: GitHub writes "suggested changes" where a reviewer who counts "requested changes".
+  const REVIEW_WORDS = [
+    ['approved', /\bapproved these changes\b/],
+    ['changes', /\b(?:requested|suggested) changes\b/]
+  ];
+
   // An approval needs no comment, so its strip says what it did instead.
   const REVIEW_WORDING = { approved: 'approved these changes', changes: 'requested changes', commented: 'reviewed' };
 
@@ -341,11 +348,23 @@
     return match ? match[0] : fallback;
   }
 
+  // The words beside the reviewer's name, without the name, the timestamp or anything they wrote.
+  function reviewWords(badge) {
+    const body = badge && badge.parentElement && badge.parentElement.querySelector(':scope > .TimelineItem-body');
+    if (!body) return '';
+    const line = body.querySelector(':scope > div') || body;
+    const said = Array.from(line.childNodes, (node) => (node.nodeType === 3 ? node.textContent : '')).join(' ');
+    const match = REVIEW_WORDS.find(([, words]) => words.test(said));
+    return match ? match[0] : '';
+  }
+
   function reviewOutcome(row) {
     if (!REVIEW_GID.test(rowGid(row))) return '';
 
     // A badge this cannot read is still a review, so it counts as the plainest kind.
-    return iconOutcome(timelineBadge(row), REVIEW_ICONS, 'commented');
+    const badge = timelineBadge(row);
+    const outcome = iconOutcome(badge, REVIEW_ICONS, 'commented');
+    return outcome === 'commented' ? reviewWords(badge) || outcome : outcome;
   }
 
   function isPrBody(row) {
