@@ -335,13 +335,17 @@
     return Boolean(badge && badge.querySelector(COMMIT_ICON_SELECTOR));
   }
 
+  // The outcome named by whichever of the icons the element draws.
+  function iconOutcome(element, icons, fallback) {
+    const match = element && icons.find(([, selector]) => element.querySelector(selector));
+    return match ? match[0] : fallback;
+  }
+
   function reviewOutcome(row) {
     if (!REVIEW_GID.test(rowGid(row))) return '';
 
     // A badge this cannot read is still a review, so it counts as the plainest kind.
-    const badge = timelineBadge(row);
-    const match = badge && REVIEW_ICONS.find(([, selector]) => badge.querySelector(selector));
-    return match ? match[0] : 'commented';
+    return iconOutcome(timelineBadge(row), REVIEW_ICONS, 'commented');
   }
 
   function isPrBody(row) {
@@ -451,9 +455,8 @@
 
   function classifyReviewer(row, rules) {
     const author = readIdentity(row, row.querySelector(REVIEWER_LINK_SELECTOR), null);
-    const status = row.querySelector(REVIEWER_STATUS_SELECTOR);
-    const match = status && REVIEWER_ICONS.find(([, selector]) => status.querySelector(selector));
-    return { actor: classifyAuthor(author, rules), form: 'reviewer', review: match ? match[0] : '' };
+    const review = iconOutcome(row.querySelector(REVIEWER_STATUS_SELECTOR), REVIEWER_ICONS, '');
+    return { actor: classifyAuthor(author, rules), form: 'reviewer', review };
   }
 
   function outermost(elements, root) {

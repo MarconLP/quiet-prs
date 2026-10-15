@@ -186,14 +186,11 @@
       }
 
       const login = leader.dataset.prlanesLogin || '';
+      const review = kept(leader);
       let end = index + 1;
-      while (
-        end < rows.length &&
-        !kept(leader) &&
-        botComment(rows[end]) &&
-        !kept(rows[end]) &&
-        (rows[end].dataset.prlanesLogin || '') === login
-      ) end += 1;
+      if (!review) {
+        while (end < rows.length && botComment(rows[end]) && !kept(rows[end]) && (rows[end].dataset.prlanesLogin || '') === login) end += 1;
+      }
 
       const run = end - index;
       const open = wantsOpen(leader);
@@ -202,7 +199,7 @@
       setText(leader.querySelector('.prlanes-strip-more'), run > 1 ? `+${run - 1} more` : '');
       const control = leader.querySelector(`.${HIDE_CLASS}`);
       if (control) {
-        setAttr(control, 'title', run > 1 ? `Hide these ${run} comments` : kept(leader) ? 'Hide this review' : 'Hide this comment');
+        setAttr(control, 'title', run > 1 ? `Hide these ${run} comments` : `Hide this ${review ? 'review' : 'comment'}`);
         if (open) placeHide(leader, control);
       }
 
