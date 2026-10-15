@@ -160,6 +160,11 @@
 
   const ASSIGNED_SELECTOR = '[data-assignee-name]';
 
+  // A reviewer's status in the sidebar is the same verdict as their review, drawn with a comment
+  // bubble where the timeline has an eye. Awaiting a review is a dot, and is no verdict at all.
+  const REVIEWER_STATUS_SELECTOR = '.reviewers-status-icon';
+  const REVIEWER_ICONS = REVIEW_ICONS.concat([['commented', '.octicon-comment']]);
+
   const THREAD_SELECTOR = [
     '.js-resolvable-timeline-thread-container',
     '.review-thread-component',
@@ -333,10 +338,10 @@
   function reviewOutcome(row) {
     if (!REVIEW_GID.test(rowGid(row))) return '';
 
+    // A badge this cannot read is still a review, so it counts as the plainest kind.
     const badge = timelineBadge(row);
-    if (!badge) return '';
-    const match = REVIEW_ICONS.find(([, selector]) => badge.querySelector(selector));
-    return match ? match[0] : '';
+    const match = badge && REVIEW_ICONS.find(([, selector]) => badge.querySelector(selector));
+    return match ? match[0] : 'commented';
   }
 
   function isPrBody(row) {
@@ -384,9 +389,14 @@
     return { actor: classifyAuthor(author, rules), form: 'event' };
   }
 
-  function commentPreview(row) {
+  function reviewVerdict(review) {
+    return REVIEW_WORDING[review] || '';
+  }
+
+  function commentPreview(row, review) {
     const body = row.querySelector(COMMENT_BODY_SELECTOR);
-    const text = body ? (body.textContent || '').replace(/\s+/g, ' ').trim() : REVIEW_WORDING[reviewOutcome(row)] || '';
+    const said = body ? (body.textContent || '').replace(/\s+/g, ' ').trim() : '';
+    const text = said || reviewVerdict(review);
     return text.length > PREVIEW_LIMIT ? `${text.slice(0, PREVIEW_LIMIT).trimEnd()}\u2026` : text;
   }
 
@@ -441,7 +451,9 @@
 
   function classifyReviewer(row, rules) {
     const author = readIdentity(row, row.querySelector(REVIEWER_LINK_SELECTOR), null);
-    return { actor: classifyAuthor(author, rules), form: 'reviewer' };
+    const status = row.querySelector(REVIEWER_STATUS_SELECTOR);
+    const match = status && REVIEWER_ICONS.find(([, selector]) => status.querySelector(selector));
+    return { actor: classifyAuthor(author, rules), form: 'reviewer', review: match ? match[0] : '' };
   }
 
   function outermost(elements, root) {
@@ -514,6 +526,7 @@
     normalizeLogin,
     parseLoginList,
     resolvableThreads,
+    reviewVerdict,
     reviewerRows,
     threadRows,
     timelineRows

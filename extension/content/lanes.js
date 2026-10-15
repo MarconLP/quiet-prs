@@ -73,14 +73,18 @@
   }
 
   // A bot comment you have hidden still leaves a mark: one line you can click to bring them back.
+  // A review you keep always does, collapsing or not, since its verdict is the part worth seeing.
   function strippable(row) {
     return (
-      settings.collapseBots &&
+      (settings.collapseBots || kept(row)) &&
       row.dataset.prlanesForm === 'comment' &&
       row.dataset.prlanesPin !== '1' &&
-      row.dataset.prlanesKeep !== '1' &&
       !TABLE_TAGS.test(row.tagName)
     );
+  }
+
+  function kept(row) {
+    return row.dataset.prlanesKeep === '1';
   }
 
   function botComment(row) {
@@ -126,14 +130,17 @@
       ? make('img', { class: 'prlanes-strip-face', src: kind.avatar, alt: '' })
       : make('span', { class: 'prlanes-strip-face' }, [icon(kind.actor)]);
 
+    // A kept review folds to its verdict alone: the body is what the bots button is hiding.
+    const verdict = kept(row);
+
     return make('button', {
       type: 'button',
-      class: STRIP_CLASS,
-      title: 'Show this comment'
+      class: verdict ? `${STRIP_CLASS} ${STRIP_CLASS}--${kind.review}` : STRIP_CLASS,
+      title: verdict ? 'Show this review' : 'Show this comment'
     }, [
       face,
       make('span', { class: 'prlanes-strip-who' }, [kind.login || NOBODY[kind.actor]]),
-      make('span', { class: 'prlanes-strip-preview' }, [lanes.commentPreview(row)]),
+      make('span', { class: 'prlanes-strip-preview' }, [verdict ? lanes.reviewVerdict(kind.review) : lanes.commentPreview(row, kind.review)]),
       make('span', { class: 'prlanes-strip-more' }),
       make('span', { class: 'prlanes-strip-hint' }, ['Show'])
     ]);
@@ -166,6 +173,7 @@
   }
 
   // Back-to-back comments from the same bot are one thing to read, so they are one thing to fold.
+  // A kept review stands alone, or its verdict would vanish into the strip of the comment above.
   function foldRuns(rows) {
     let index = 0;
 
@@ -179,7 +187,13 @@
 
       const login = leader.dataset.prlanesLogin || '';
       let end = index + 1;
-      while (end < rows.length && botComment(rows[end]) && (rows[end].dataset.prlanesLogin || '') === login) end += 1;
+      while (
+        end < rows.length &&
+        !kept(leader) &&
+        botComment(rows[end]) &&
+        !kept(rows[end]) &&
+        (rows[end].dataset.prlanesLogin || '') === login
+      ) end += 1;
 
       const run = end - index;
       const open = wantsOpen(leader);
@@ -188,7 +202,7 @@
       setText(leader.querySelector('.prlanes-strip-more'), run > 1 ? `+${run - 1} more` : '');
       const control = leader.querySelector(`.${HIDE_CLASS}`);
       if (control) {
-        setAttr(control, 'title', run > 1 ? `Hide these ${run} comments` : 'Hide this comment');
+        setAttr(control, 'title', run > 1 ? `Hide these ${run} comments` : kept(leader) ? 'Hide this review' : 'Hide this comment');
         if (open) placeHide(leader, control);
       }
 
@@ -223,7 +237,7 @@
       }
 
       const form = row.dataset.prlanesForm;
-      if (row.dataset.prlanesPin === '1' || row.dataset.prlanesKeep === '1') continue;
+      if (row.dataset.prlanesPin === '1') continue;
       if (form === 'comment' && row.dataset.prlanesActor === 'bot') counts.bots += 1;
       if (form === 'event' || form === 'commit') counts.events += 1;
     }
