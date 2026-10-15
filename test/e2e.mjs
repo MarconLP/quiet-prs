@@ -259,6 +259,8 @@ if (process.argv.includes('--serve')) {
     assert.deepEqual(quiet.rows['ai-review'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' });
     assert.deepEqual(quiet.rows['bot-event'], uncollapsed({ actor: 'bot', form: 'event', pinned: false, visible: false }));
     assert.deepEqual(quiet.rows['reviewer-bot'], uncollapsed({ actor: 'bot', form: 'reviewer', pinned: false, visible: false }));
+    assert.deepEqual(quiet.rows['reviewer-latest-only'], uncollapsed({ actor: 'bot', form: 'reviewer', pinned: false, visible: true }),
+      'a bot whose latest verdict is kept stays among the reviewers');
 
     // Suggestions are nobody's review yet, so the bots button has no business with them.
     assert.equal(quiet.rows['suggested-human'].actor, undefined, 'a suggested reviewer is never classified');
@@ -412,6 +414,7 @@ if (process.argv.includes('--serve')) {
     // Cleared, the list stops singling a bot out and its verdicts fold into one run like any other.
     await settings({ latestOnlyBots: '' });
     const everyVerdict = await until('every stamphog verdict to fold', (state) => state.rows['stamphog-old'].fold === 'strip');
+    assert.equal(everyVerdict.rows['reviewer-latest-only'].visible, false, 'and its reviewer row goes like any bot\'s');
     assert.equal(everyVerdict.rows['stamphog-new'].fold, 'gone', 'the latest joins the earlier one\'s run');
     assert.equal(everyVerdict.strips['stamphog-old'].more, '+1 more');
     await settings({ latestOnlyBots: 'stamphog' });

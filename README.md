@@ -29,7 +29,7 @@ Both buttons live on the conversation, not in here. These settings decide where 
 | Keep bot change requests | on | So does a bot's change request |
 | Keep bot reviews that only commented | off | A bot's comment-only review folds with its other comments unless this is on |
 | Hide comments that say exactly | `@codex review` | A comment whose whole text is one of these phrases goes while **Hide bots** is on, whoever wrote it. One that says anything more stays |
-| Show only the latest from these bots | `stamphog` | Logins whose earlier comments and reviews go altogether while **Hide bots** is on, leaving their latest in full. Clear it to fold them like any other bot |
+| Show only the latest from these bots | `stamphog` | Logins whose earlier comments and reviews go altogether while **Hide bots** is on, leaving their latest in full and their row in the **Reviewers** sidebar. Clear it to fold them like any other bot |
 | Remember per repository | off | Keep a separate choice for each repo instead of one setting everywhere |
 | Hide resolved PR review threads | off | Threads somebody has already resolved drop out, whatever the buttons say |
 | Extra bot accounts | none | Logins that post through a token and look human |

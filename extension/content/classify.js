@@ -472,7 +472,10 @@
 
   function classifyReviewer(row, rules) {
     const author = readIdentity(row, row.querySelector(REVIEWER_LINK_SELECTOR), null);
-    return { actor: classifyAuthor(author, rules), form: 'reviewer' };
+    const actor = classifyAuthor(author, rules);
+    // A bot whose latest verdict you keep is a reviewer you are waiting on, so its row stays too.
+    const keep = actor === 'bot' && rules.latestOnly.has(author.login);
+    return { actor, form: 'reviewer', keep };
   }
 
   function outermost(elements, root) {

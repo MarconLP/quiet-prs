@@ -245,7 +245,7 @@
         else delete row.dataset.prlanesLogin;
         if (lanes.isPrBody(row)) setData(row, 'prlanesPin', '1');
         else delete row.dataset.prlanesPin;
-        if (kind.actor === 'bot' && settings[lanes.REVIEW_KEEP_SETTINGS[kind.review]]) setData(row, 'prlanesKeep', '1');
+        if (kind.keep || (kind.actor === 'bot' && settings[lanes.REVIEW_KEEP_SETTINGS[kind.review]])) setData(row, 'prlanesKeep', '1');
         else delete row.dataset.prlanesKeep;
         if (kind.routine) setData(row, 'prlanesRoutine', '1');
         else delete row.dataset.prlanesRoutine;
