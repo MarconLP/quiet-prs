@@ -78,6 +78,7 @@
       settings.collapseBots &&
       row.dataset.prlanesForm === 'comment' &&
       row.dataset.prlanesPin !== '1' &&
+      row.dataset.prlanesKeep !== '1' &&
       !TABLE_TAGS.test(row.tagName)
     );
   }
@@ -216,11 +217,14 @@
         else delete row.dataset.prlanesLogin;
         if (lanes.isPrBody(row)) setData(row, 'prlanesPin', '1');
         else delete row.dataset.prlanesPin;
+        // An approval or a change request is how a review ended, so with this on neither button takes it.
+        if (settings.keepVerdicts && lanes.reviewVerdict(row)) setData(row, 'prlanesKeep', '1');
+        else delete row.dataset.prlanesKeep;
         fillStrip(row, kind);
       }
 
       const form = row.dataset.prlanesForm;
-      if (row.dataset.prlanesPin === '1') continue;
+      if (row.dataset.prlanesPin === '1' || row.dataset.prlanesKeep === '1') continue;
       if (form === 'comment' && row.dataset.prlanesActor === 'bot') counts.bots += 1;
       if (form === 'event' || form === 'commit') counts.events += 1;
     }
@@ -496,7 +500,7 @@
   }
 
   // Strips are built during classification, so changing your mind about them means classifying again.
-  const RECLASSIFY_KEYS = lanes.CLASSIFICATION_KEYS.concat(['collapseBots']);
+  const RECLASSIFY_KEYS = lanes.CLASSIFICATION_KEYS.concat(['collapseBots', 'keepVerdicts']);
 
   function invalidateRules() {
     rules = lanes.buildRules(settings);

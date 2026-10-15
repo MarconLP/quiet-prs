@@ -7,6 +7,7 @@
     collapseBots: true,
     rememberPerRepo: false,
     hideResolvedThreads: false,
+    keepVerdicts: false,
     extraBots: '',
     forceHumans: '',
     heuristics: true
@@ -110,6 +111,14 @@
   const TIMELINE_BADGE_SELECTOR = ':scope > .TimelineItem-badge, :scope > [class*="TimelineItem-badge"]';
   const COMMIT_ICON_SELECTOR = '.octicon-git-commit';
   const COMMIT_GID = /^C_/;
+
+  // A review row carries a PRR_ id, and its badge says how it ended. One that only commented
+  // wears an eye, so it is not a verdict.
+  const REVIEW_GID = /^PRR_/;
+  const VERDICT_ICONS = [
+    ['approved', '.octicon-check'],
+    ['changes', '.octicon-file-diff']
+  ];
 
   const PR_BODY_SELECTOR = '[data-testid="issue-body"], [id^="issue-"]';
   const PR_BODY_ID = /^issue-\d+$/;
@@ -293,13 +302,29 @@
     return hasCommentBody(row) || Boolean(row.querySelector(THREAD_SELECTOR));
   }
 
-  function isCommit(row) {
-    const gid = row.getAttribute ? row.getAttribute('data-gid') : '';
-    if (gid && COMMIT_GID.test(gid)) return true;
+  function rowGid(row) {
+    return (row.getAttribute && row.getAttribute('data-gid')) || '';
+  }
 
+  function timelineBadge(row) {
     const item = row.matches && row.matches('.TimelineItem') ? row : row.querySelector('.TimelineItem');
-    const badge = item && item.querySelector(TIMELINE_BADGE_SELECTOR);
+    return item && item.querySelector(TIMELINE_BADGE_SELECTOR);
+  }
+
+  function isCommit(row) {
+    if (COMMIT_GID.test(rowGid(row))) return true;
+
+    const badge = timelineBadge(row);
     return Boolean(badge && badge.querySelector(COMMIT_ICON_SELECTOR));
+  }
+
+  function reviewVerdict(row) {
+    if (!REVIEW_GID.test(rowGid(row))) return '';
+
+    const badge = timelineBadge(row);
+    if (!badge) return '';
+    const match = VERDICT_ICONS.find(([, selector]) => badge.querySelector(selector));
+    return match ? match[0] : '';
   }
 
   function isPrBody(row) {
@@ -473,6 +498,7 @@
     normalizeLogin,
     parseLoginList,
     resolvableThreads,
+    reviewVerdict,
     reviewerRows,
     threadRows,
     timelineRows
