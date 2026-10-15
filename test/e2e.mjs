@@ -292,6 +292,10 @@ if (process.argv.includes('--serve')) {
     assert.deepEqual(quiet.rows['stamphog-new'], uncollapsed({ actor: 'bot', form: 'comment', pinned: false, visible: true }),
       'and its latest stays whole, though a comment-only review would otherwise fold');
 
+    // A comment that only summons a bot goes with the bots, but only when that is all it says.
+    assert.equal(quiet.rows['codex-request'].visible, false, 'a bare "@codex review" goes with the bots');
+    assert.equal(quiet.rows['codex-request-more'].visible, true, 'one that says more stays');
+
     // Commits belong to nobody, so hiding bots never takes them.
     assert.deepEqual(quiet.rows['human-commit'], uncollapsed({ actor: 'none', form: 'commit', pinned: false, visible: true }));
     assert.deepEqual(quiet.rows['bot-commit'], uncollapsed({ actor: 'none', form: 'commit', pinned: false, visible: true }));
@@ -417,6 +421,7 @@ if (process.argv.includes('--serve')) {
     const eventsOnly = await until('the bots to come back while events stay hidden', (state) => !state.hiding.bots.on);
     assert.equal(eventsOnly.rows['bot-comment'].fold, 'open');
     assert.equal(eventsOnly.rows['stamphog-old'].visible, true, 'with the bots shown, every stamphog verdict is back');
+    assert.equal(eventsOnly.rows['codex-request'].visible, true, 'and so is the "@codex review" request');
     assert.equal(eventsOnly.rows['bot-event'].visible, false, 'a bot event is an event either way');
     assert.equal(eventsOnly.rows['human-commit'].visible, false, 'eventsOnly: commit gone');
 
@@ -577,7 +582,7 @@ if (process.argv.includes('--serve')) {
 
     await evaluate(`(() => {
       for (const row of document.querySelectorAll('[data-row]')) {
-        if (row.dataset.prlanesActor === 'bot' && row.dataset.prlanesForm === 'comment') row.remove();
+        if (row.dataset.prlanesForm === 'comment' && (row.dataset.prlanesActor === 'bot' || row.dataset.prlanesRoutine === '1')) row.remove();
       }
     })()`);
     const noBots = await waitFor(async () => {

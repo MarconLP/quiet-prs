@@ -11,12 +11,13 @@
     keepBotChangeRequests: true,
     keepBotReviewComments: false,
     latestOnlyBots: 'stamphog',
+    hiddenComments: '@codex review',
     extraBots: '',
     forceHumans: '',
     heuristics: true
   };
 
-  const CLASSIFICATION_KEYS = ['extraBots', 'forceHumans', 'heuristics', 'latestOnlyBots'];
+  const CLASSIFICATION_KEYS = ['extraBots', 'forceHumans', 'heuristics', 'latestOnlyBots', 'hiddenComments'];
 
   const DEFAULT_BOT_LOGINS = [
     'allcontributors',
@@ -184,6 +185,18 @@
       .filter(Boolean);
   }
 
+  // One phrase per line, compared the way a comment's text reads on the page.
+  function parsePhraseList(value) {
+    return String(value == null ? '' : value)
+      .split('\n')
+      .map(normalizePhrase)
+      .filter(Boolean);
+  }
+
+  function normalizePhrase(value) {
+    return String(value).replace(/\s+/g, ' ').trim().toLowerCase();
+  }
+
   // The out-of-the-box list is only worth showing where the name rules would not have got there
   // on their own; the rest is noise on the settings page.
   function botsMissedByHeuristics() {
@@ -196,7 +209,8 @@
       bots: new Set(DEFAULT_BOT_LOGINS.concat(parseLoginList(options.extraBots))),
       humans: new Set(parseLoginList(options.forceHumans)),
       heuristics: options.heuristics !== false,
-      latestOnly: new Set(parseLoginList(options.latestOnlyBots))
+      latestOnly: new Set(parseLoginList(options.latestOnlyBots)),
+      hiddenComments: new Set(parsePhraseList(options.hiddenComments))
     };
   }
 
@@ -366,7 +380,14 @@
       // The face on a collapsed row has to be the author it speaks for, not whoever posted first.
       const spoken = written[kinds.indexOf(actor)];
 
-      return { actor, form: 'comment', review, login: spoken.author.login, avatar: spoken.author.avatarSrc };
+      return {
+        actor,
+        form: 'comment',
+        review,
+        routine: isRoutineComment(row, nodes, rules),
+        login: spoken.author.login,
+        avatar: spoken.author.avatarSrc
+      };
     }
 
     if (row.querySelector(COMPOSER_SELECTOR)) return { actor: 'none', form: 'chrome' };
@@ -384,6 +405,14 @@
     if (!author.login) return { actor: 'none', form: 'chrome' };
 
     return { actor: classifyAuthor(author, rules), form: 'event' };
+  }
+
+  // A comment that only summons a bot, like "@codex review", reads the same every time. It has to
+  // be the whole comment, so one that says anything more stays.
+  function isRoutineComment(row, nodes, rules) {
+    if (!rules.hiddenComments.size || nodes.length > 1) return false;
+    const body = row.querySelector(COMMENT_BODY_SELECTOR);
+    return Boolean(body) && rules.hiddenComments.has(normalizePhrase(body.textContent || ''));
   }
 
   function commentPreview(row) {

@@ -76,6 +76,7 @@ test('the settings schema is exported for both the content script and the option
     'extraBots',
     'forceHumans',
     'heuristics',
+    'hiddenComments',
     'hideResolvedThreads',
     'keepBotApprovals',
     'keepBotChangeRequests',

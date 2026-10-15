@@ -166,6 +166,7 @@
 
 [data-prlanes-bots="hide"] [data-prlanes-actor="bot"]:not([data-prlanes-pin="1"]):not([data-prlanes-keep="1"]):not([data-prlanes-latest="latest"]):not([data-prlanes-fold]),
 [data-prlanes-bots="hide"] [data-prlanes-latest="stale"],
+[data-prlanes-bots="hide"] [data-prlanes-routine="1"]:not([data-prlanes-pin="1"]),
 [data-prlanes-events="hide"] :is([data-prlanes-form="event"], [data-prlanes-form="commit"]):not([data-prlanes-pin="1"]),
 [data-prlanes-threads="hide"] [data-prlanes-resolved="1"] {
   display: none !important;

@@ -247,6 +247,8 @@
         else delete row.dataset.prlanesPin;
         if (kind.actor === 'bot' && settings[lanes.REVIEW_KEEP_SETTINGS[kind.review]]) setData(row, 'prlanesKeep', '1');
         else delete row.dataset.prlanesKeep;
+        if (kind.routine) setData(row, 'prlanesRoutine', '1');
+        else delete row.dataset.prlanesRoutine;
         fillStrip(row, kind);
       }
     }
@@ -256,7 +258,7 @@
     for (const row of rows) {
       const form = row.dataset.prlanesForm;
       if (row.dataset.prlanesPin === '1' || row.dataset.prlanesKeep === '1' || row.dataset.prlanesLatest === 'latest') continue;
-      if (form === 'comment' && row.dataset.prlanesActor === 'bot') counts.bots += 1;
+      if (form === 'comment' && (row.dataset.prlanesActor === 'bot' || row.dataset.prlanesRoutine === '1')) counts.bots += 1;
       if (form === 'event' || form === 'commit') counts.events += 1;
     }
 

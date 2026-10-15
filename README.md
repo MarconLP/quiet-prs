@@ -6,7 +6,7 @@ Bots comment on every pull request, and the two people arguing about the actual 
 
 ## What it does
 
-What people say is never hidden. The two buttons turn off everything else, independently of each other, and stay where you leave them. Each one's tooltip says what a click will do, so a button offering **Show bots** means the bots are currently gone, and its icon is struck through while it hides.
+What people say is never hidden, except the comments you list that only summon a bot, like `@codex review`. The two buttons turn off everything else, independently of each other, and stay where you leave them. Each one's tooltip says what a click will do, so a button offering **Show bots** means the bots are currently gone, and its icon is struck through while it hides.
 
 **Hide bots** takes out everything posted by apps, CI and review bots: their comments, the timeline events they generate, and their rows in the **Reviewers** sidebar, so the list shows the people whose review you are actually waiting on. Suggested reviewers are left alone: nobody is waiting on a review that has not been asked for. A hidden bot comment does not vanish. It shrinks to a single line carrying the bot's avatar, its name and the opening of what it wrote, and back-to-back comments from the same bot share one line between them. Click it to read them; a **Hide** in the avatar gutter folds them away again. That Hide is there whenever a bot comment is showing, so you can fold one bot's run without putting every bot away.
 
@@ -28,6 +28,7 @@ Both buttons live on the conversation, not in here. These settings decide where 
 | Keep bot approvals | on | A bot's approval stays in full while **Hide bots** is on |
 | Keep bot change requests | on | So does a bot's change request |
 | Keep bot reviews that only commented | off | A bot's comment-only review folds with its other comments unless this is on |
+| Hide comments that say exactly | `@codex review` | A comment whose whole text is one of these phrases goes while **Hide bots** is on, whoever wrote it. One that says anything more stays |
 | Show only the latest from these bots | `stamphog` | Logins whose earlier comments and reviews go altogether while **Hide bots** is on, leaving their latest in full. Clear it to fold them like any other bot |
 | Remember per repository | off | Keep a separate choice for each repo instead of one setting everywhere |
 | Hide resolved PR review threads | off | Threads somebody has already resolved drop out, whatever the buttons say |
