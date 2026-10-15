@@ -217,8 +217,7 @@
         else delete row.dataset.prlanesLogin;
         if (lanes.isPrBody(row)) setData(row, 'prlanesPin', '1');
         else delete row.dataset.prlanesPin;
-        // An approval or a change request is how a review ended, so with this on neither button takes it.
-        if (settings.keepVerdicts && lanes.reviewVerdict(row)) setData(row, 'prlanesKeep', '1');
+        if (kind.actor === 'bot' && settings[lanes.REVIEW_KEEP_SETTINGS[kind.review]]) setData(row, 'prlanesKeep', '1');
         else delete row.dataset.prlanesKeep;
         fillStrip(row, kind);
       }
@@ -500,7 +499,7 @@
   }
 
   // Strips are built during classification, so changing your mind about them means classifying again.
-  const RECLASSIFY_KEYS = lanes.CLASSIFICATION_KEYS.concat(['collapseBots', 'keepVerdicts']);
+  const RECLASSIFY_KEYS = lanes.CLASSIFICATION_KEYS.concat(['collapseBots'], Object.values(lanes.REVIEW_KEEP_SETTINGS));
 
   function invalidateRules() {
     rules = lanes.buildRules(settings);

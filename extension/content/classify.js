@@ -7,7 +7,9 @@
     collapseBots: true,
     rememberPerRepo: false,
     hideResolvedThreads: false,
-    keepVerdicts: false,
+    keepBotApprovals: true,
+    keepBotChangeRequests: true,
+    keepBotReviewComments: false,
     extraBots: '',
     forceHumans: '',
     heuristics: true
@@ -112,13 +114,23 @@
   const COMMIT_ICON_SELECTOR = '.octicon-git-commit';
   const COMMIT_GID = /^C_/;
 
-  // A review row carries a PRR_ id, and its badge says how it ended. One that only commented
-  // wears an eye, so it is not a verdict.
+  // A review row carries a PRR_ id, and its badge says how it ended.
   const REVIEW_GID = /^PRR_/;
-  const VERDICT_ICONS = [
+  const REVIEW_ICONS = [
     ['approved', '.octicon-check'],
-    ['changes', '.octicon-file-diff']
+    ['changes', '.octicon-file-diff'],
+    ['commented', '.octicon-eye']
   ];
+
+  // An approval needs no comment, so its strip says what it did instead.
+  const REVIEW_WORDING = { approved: 'approved these changes', changes: 'requested changes', commented: 'reviewed' };
+
+  // Which setting keeps each kind of bot review in view while the bots are hidden.
+  const REVIEW_KEEP_SETTINGS = {
+    approved: 'keepBotApprovals',
+    changes: 'keepBotChangeRequests',
+    commented: 'keepBotReviewComments'
+  };
 
   const PR_BODY_SELECTOR = '[data-testid="issue-body"], [id^="issue-"]';
   const PR_BODY_ID = /^issue-\d+$/;
@@ -318,12 +330,12 @@
     return Boolean(badge && badge.querySelector(COMMIT_ICON_SELECTOR));
   }
 
-  function reviewVerdict(row) {
+  function reviewOutcome(row) {
     if (!REVIEW_GID.test(rowGid(row))) return '';
 
     const badge = timelineBadge(row);
     if (!badge) return '';
-    const match = VERDICT_ICONS.find(([, selector]) => badge.querySelector(selector));
+    const match = REVIEW_ICONS.find(([, selector]) => badge.querySelector(selector));
     return match ? match[0] : '';
   }
 
@@ -334,7 +346,10 @@
   }
 
   function classifyRow(row, rules) {
-    if (carriesComment(row)) {
+    // A review is somebody saying something even when an approval left no comment, so it is
+    // never a timeline event.
+    const review = reviewOutcome(row);
+    if (review || carriesComment(row)) {
       const nodes = commentNodes(row);
       // Only a lone comment owns the row's rail; in a thread each reply carries its own avatar.
       const rail = nodes.length === 1 ? row.querySelector(AVATAR_RAIL_SELECTOR) : null;
@@ -349,7 +364,7 @@
       // The face on a collapsed row has to be the author it speaks for, not whoever posted first.
       const spoken = written[kinds.indexOf(actor)];
 
-      return { actor, form: 'comment', login: spoken.author.login, avatar: spoken.author.avatarSrc };
+      return { actor, form: 'comment', review, login: spoken.author.login, avatar: spoken.author.avatarSrc };
     }
 
     if (row.querySelector(COMPOSER_SELECTOR)) return { actor: 'none', form: 'chrome' };
@@ -371,7 +386,7 @@
 
   function commentPreview(row) {
     const body = row.querySelector(COMMENT_BODY_SELECTOR);
-    const text = body ? (body.textContent || '').replace(/\s+/g, ' ').trim() : '';
+    const text = body ? (body.textContent || '').replace(/\s+/g, ' ').trim() : REVIEW_WORDING[reviewOutcome(row)] || '';
     return text.length > PREVIEW_LIMIT ? `${text.slice(0, PREVIEW_LIMIT).trimEnd()}\u2026` : text;
   }
 
@@ -484,6 +499,7 @@
   root.PRLanes = Object.assign(root.PRLanes || {}, {
     CLASSIFICATION_KEYS,
     DEFAULTS,
+    REVIEW_KEEP_SETTINGS,
     botsMissedByHeuristics,
     buildRules,
     classifyAuthor,
@@ -498,7 +514,6 @@
     normalizeLogin,
     parseLoginList,
     resolvableThreads,
-    reviewVerdict,
     reviewerRows,
     threadRows,
     timelineRows

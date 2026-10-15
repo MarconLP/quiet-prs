@@ -29,12 +29,7 @@
 
         <label class="check">
           <input type="checkbox" id="defaultHideEvents" />
-          <span>Open with <strong>Hide events</strong> on (labels, commits, reviews, merges)</span>
-        </label>
-
-        <label class="check">
-          <input type="checkbox" id="keepVerdicts" />
-          <span>Always show approvals and change requests, whatever the two buttons say</span>
+          <span>Open with <strong>Hide events</strong> on (labels, commits, merges)</span>
         </label>
 
         <label class="check">
@@ -45,6 +40,29 @@
         <label class="check">
           <input type="checkbox" id="hideResolvedThreads" />
           <span>Hide resolved PR review threads</span>
+        </label>
+      </section>
+
+      <section>
+        <h2>Bot reviews</h2>
+        <p class="hint">
+          A person's review always shows, approvals included. These choose which of a bot's reviews
+          stay in full while <strong>Hide bots</strong> is on; the rest fold like its comments.
+        </p>
+
+        <label class="check">
+          <input type="checkbox" id="keepBotApprovals" />
+          <span>Keep bot approvals</span>
+        </label>
+
+        <label class="check">
+          <input type="checkbox" id="keepBotChangeRequests" />
+          <span>Keep bot change requests</span>
+        </label>
+
+        <label class="check">
+          <input type="checkbox" id="keepBotReviewComments" />
+          <span>Keep bot reviews that only commented</span>
         </label>
       </section>
 

@@ -165,7 +165,7 @@
 }
 
 [data-prlanes-bots="hide"] [data-prlanes-actor="bot"]:not([data-prlanes-pin="1"]):not([data-prlanes-keep="1"]):not([data-prlanes-fold]),
-[data-prlanes-events="hide"] :is([data-prlanes-form="event"], [data-prlanes-form="commit"]):not([data-prlanes-pin="1"]):not([data-prlanes-keep="1"]),
+[data-prlanes-events="hide"] :is([data-prlanes-form="event"], [data-prlanes-form="commit"]):not([data-prlanes-pin="1"]),
 [data-prlanes-threads="hide"] [data-prlanes-resolved="1"] {
   display: none !important;
 }
