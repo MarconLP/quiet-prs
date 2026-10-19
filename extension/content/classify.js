@@ -84,7 +84,8 @@
     '[data-testid="avatar-link"]',
     '[data-testid="issue-body-header-author"]',
     '[data-testid="comment-header-author"]',
-    '[data-testid="author-link"]'
+    '[data-testid="author-link"]',
+    '[data-testid="actor-link"]'
   ].join(',');
 
   const AVATAR_SELECTOR = 'img[class*="avatar" i], img[data-component="Avatar"], img[src*="avatars."]';
@@ -154,7 +155,9 @@
     '.TimelineItem',
     '[data-testid="timeline-item"]',
     '[data-testid="issue-comment"]',
-    '[data-testid="issue-timeline-item"]'
+    '[data-testid="issue-timeline-item"]',
+    // The React issue timeline is a list whose every entry, comment or event, carries its node id.
+    '[data-wrapper-timeline-id]'
   ].join(',');
 
   const FILES_ROOT_SELECTOR = '#files, [data-testid="diff-view"], .js-diff-progressive-container';

@@ -260,6 +260,11 @@ if (process.argv.includes('--serve')) {
     assert.deepEqual(quiet.rows['bot-event'], uncollapsed({ actor: 'bot', form: 'event', pinned: false, visible: false }));
     assert.deepEqual(quiet.rows['reviewer-bot'], uncollapsed({ actor: 'bot', form: 'reviewer', pinned: false, visible: false }));
 
+    // The React issue timeline is a list of entries, each its own row, not one row for the lot.
+    assert.deepEqual(quiet.rows['react-human-event'], uncollapsed({ actor: 'human', form: 'event', pinned: false, visible: true }));
+    assert.deepEqual(quiet.rows['react-bot-event'], uncollapsed({ actor: 'bot', form: 'event', pinned: false, visible: false }));
+    assert.deepEqual(quiet.rows['react-bot-comment'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' });
+
     // Suggestions are nobody's review yet, so the bots button has no business with them.
     assert.equal(quiet.rows['suggested-human'].actor, undefined, 'a suggested reviewer is never classified');
     assert.equal(quiet.rows['suggested-human'].visible, true);
@@ -402,6 +407,7 @@ if (process.argv.includes('--serve')) {
     const still = await until('timeline events to go', (state) => state.hiding.events.on);
     assert.equal(still.hiding.events.label, 'Show events');
     assert.equal(still.rows['human-event'].visible, false, 'a person labelling something is still an event');
+    assert.equal(still.rows['react-human-event'].visible, false, 'on the React issue timeline too');
     assert.equal(still.rows['human-commit'].visible, false, 'and so is a commit');
     assert.equal(still.rows['bot-commit'].visible, false, 'still: bot-commit gone');
     assert.equal(still.rows['pr-body'].visible, true, 'comments are untouched by the events button');
