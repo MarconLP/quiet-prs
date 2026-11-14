@@ -68,12 +68,20 @@
     '.js-comment-container',
     '.review-comment',
     '[data-testid="issue-body"]',
-    '[data-testid="comment-viewer-outer-box"]',
+    // The issue page now suffixes this with the comment's node id: comment-viewer-outer-box-IC_…
+    '[data-testid^="comment-viewer-outer-box"]',
     '[data-testid="issue-comment"]',
-    '[data-testid="pr-review-comment"]'
+    '[data-testid="pr-review-comment"]',
+    // The new pull request overview: each comment is an <article> keyed by its comment id.
+    'article[id^="issuecomment-"]'
   ].join(',');
 
-  const COMMENT_BODY_SELECTOR = '.comment-body, .js-comment-body, [data-testid="markdown-body"]';
+  const COMMENT_BODY_SELECTOR = [
+    '.comment-body',
+    '.js-comment-body',
+    '[data-testid="markdown-body"]',
+    'article[id^="issuecomment-"] .markdown-body'
+  ].join(',');
 
   const OWN_SELECTOR = '.prlanes-strip';
 
@@ -114,6 +122,7 @@
   const TIMELINE_BADGE_SELECTOR = ':scope > .TimelineItem-badge, :scope > [class*="TimelineItem-badge"]';
   const COMMIT_ICON_SELECTOR = '.octicon-git-commit';
   const COMMIT_GID = /^C_/;
+  const COMMIT_GROUP_SELECTOR = '[data-testid="timeline-commit-group"], [data-testid="timeline-commit-row"]';
 
   // A review row carries a PRR_ id, and its badge says how it ended.
   const REVIEW_GID = /^PRR_/;
@@ -340,6 +349,8 @@
 
   function isCommit(row) {
     if (COMMIT_GID.test(rowGid(row))) return true;
+    // The new pull request overview groups pushes into rows of their own, with no badge or gid.
+    if (row.querySelector(COMMIT_GROUP_SELECTOR)) return true;
 
     const badge = timelineBadge(row);
     return Boolean(badge && badge.querySelector(COMMIT_ICON_SELECTOR));

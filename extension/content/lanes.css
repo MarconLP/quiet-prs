@@ -67,6 +67,8 @@
 
 .prlanes-bar--header,
 .prlanes-bar--issue,
+.prlanes-bar--summary,
+.prlanes-bar--mini,
 .prlanes-bar--tabs {
   position: static;
   padding: 0;
@@ -78,6 +80,14 @@
 
 .prlanes-bar--issue {
   margin: 0;
+}
+
+.prlanes-bar--summary {
+  margin: 0 0 0 4px;
+}
+
+.prlanes-bar--mini {
+  margin: 0 8px 0 0;
 }
 
 .prlanes-bar--header {

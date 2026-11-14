@@ -4,6 +4,14 @@
 
 Bots comment on every pull request, and the two people arguing about the actual change get buried between coverage reports and CI summaries. Quiet PRs puts two buttons on the conversation (**Hide bots** and **Hide events**) and leaves what people wrote alone.
 
+The two buttons sit next to the pull request's line count:
+
+![The Hide bots and Hide events buttons next to a pull request's line count](docs/screenshots/pr-header.png)
+
+With **Hide bots** on, each bot comment folds to one line you can click to read it, while commits and what people wrote stay as they are:
+
+![Bot comments from github-actions and greptile-apps folded to one line each between commits and a review thread](docs/screenshots/pr-bots-collapsed.png)
+
 ## What it does
 
 What people say is never hidden. The two buttons turn off everything else, independently of each other, and stay where you leave them. Each one's tooltip says what a click will do, so a button offering **Show bots** means the bots are currently gone, and its icon is struck through while it hides.
