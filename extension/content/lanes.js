@@ -28,14 +28,23 @@
   let fitted = null;
   let lastUrl = location.href;
 
-  const STICKY_HEADER_SELECTOR = '[class*="stickyHeader" i], .gh-header-sticky, [data-testid*="sticky-header"]';
+  // GitHub's CSS module classes have gone from `Module-module__name__hash` to `name__hash`, so the
+  // lookups below key on `name__`. The trailing underscores matter: the page also carries a
+  // `stickyHeaderSentinel__` and a `stickyHeaderActivationThreshold__`, which are not the header.
+  const STICKY_HEADER_SELECTOR = '[class*="stickyHeader__" i], .gh-header-sticky, [data-testid*="sticky-header"]';
   const ISSUE_STICKY_ROW_SELECTOR = '[data-testid="issue-metadata-sticky"] [class*="stickyContent"]';
   const HEADER_SELECTOR = '[class*="PullRequestHeader"], [class*="PageHeader-PageHeader"], .gh-header-show';
   const HEADER_SLOT_SELECTOR = '[class*="PageHeader-TitleArea"], .gh-header-title';
   const TAB_NAV_SELECTOR = 'nav[class*="TabNav"], nav.tabnav-tabs, .tabnav-tabs';
   const STATE_SELECTOR = '[data-testid="header-state"], .gh-header-meta .State';
-  const STATE_ROW_SELECTOR = '[class*="HeaderMetadata-module__metadataContent"], [class*="metadataContent"], .gh-header-meta';
-  const DIFFSTAT_SELECTOR = '[class*="PullRequestHeader-module__rightContentWrapper"]';
+  const STATE_ROW_SELECTOR = '[class*="metadataContent__"], .gh-header-meta';
+  const DIFFSTAT_SELECTOR = '[class*="rightContentWrapper__"]';
+  // The new pull request overview keeps a slim title bar pinned at the top at all times, so it
+  // cannot stand for "scrolled past the header" the way the old sticky header did. Its +/- count
+  // sits in the summary line under the title instead of at the end of the tab row.
+  const MINI_HEADER_SELECTOR = '[data-testid="diff-comparison-viewer-sticky-header-bar"]';
+  const MINI_HEADER_ACTIONS_SELECTOR = '[class*="actions__"]';
+  const SUMMARY_DIFFSTAT_SELECTOR = '[class*="diffStat__"]';
   const COMMENT_ACTIONS_SELECTOR = '.timeline-comment-actions, [data-testid="comment-header-right-side-items"]';
   const COMMENT_HEADER_SELECTOR = '.timeline-comment-header, .review-comment-header, [data-testid="comment-header"]';
 
@@ -369,9 +378,27 @@
     return visible(row) ? row : null;
   }
 
+  // At rest the bar trails the +/- count under the title. Once that count scrolls under the
+  // pinned title bar, the bar moves into it, ahead of Merge status and Submit review.
+  function overviewSlot() {
+    const mini = document.querySelector(MINI_HEADER_SELECTOR);
+    if (!visible(mini)) return null;
+
+    const stat = document.querySelector(SUMMARY_DIFFSTAT_SELECTOR);
+    if (visible(stat) && stat.getBoundingClientRect().top >= mini.getBoundingClientRect().bottom) {
+      return { element: stat.parentElement, variant: 'summary', after: stat };
+    }
+
+    const actions = mini.querySelector(MINI_HEADER_ACTIONS_SELECTOR);
+    return actions ? { element: actions, variant: 'mini', sticky: true, lead: true } : null;
+  }
+
   function barSlot() {
     const issueRow = issueStickyRow();
     if (issueRow) return { element: issueRow, variant: 'issue', sticky: true, before: issueRow.lastElementChild };
+
+    const overview = overviewSlot();
+    if (overview) return overview;
 
     const sticky = document.querySelector(STICKY_HEADER_SELECTOR);
     if (visible(sticky)) return { element: sticky.querySelector(HEADER_SLOT_SELECTOR) || sticky, variant: 'header', sticky: true, fit: true };
@@ -424,12 +451,16 @@
     bar.classList.toggle('prlanes-bar--diff', variant === 'diff');
     bar.classList.toggle('prlanes-bar--state', variant === 'state');
     bar.classList.toggle('prlanes-bar--issue', variant === 'issue');
+    bar.classList.toggle('prlanes-bar--summary', variant === 'summary');
+    bar.classList.toggle('prlanes-bar--mini', variant === 'mini');
     bar.classList.toggle('prlanes-bar--sticky', Boolean(slot && slot.sticky));
 
     fitTo(slot && slot.fit ? slot.element : null);
 
     if (slot) {
-      if (slot.before) {
+      if (slot.after) {
+        if (slot.after.nextElementSibling !== bar) slot.after.after(bar);
+      } else if (slot.before) {
         if (bar.nextElementSibling !== slot.before) slot.element.insertBefore(bar, slot.before);
       } else if (slot.lead) {
         if (slot.element.firstElementChild !== bar) slot.element.prepend(bar);
