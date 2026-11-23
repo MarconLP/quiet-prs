@@ -262,6 +262,11 @@ if (process.argv.includes('--serve')) {
     assert.deepEqual(quiet.rows['reviewer-latest-only'], uncollapsed({ actor: 'bot', form: 'reviewer', pinned: false, visible: true }),
       'a bot whose latest verdict is kept stays among the reviewers');
 
+    // The React issue timeline is a list of entries, each its own row, not one row for the lot.
+    assert.deepEqual(quiet.rows['react-human-event'], uncollapsed({ actor: 'human', form: 'event', pinned: false, visible: true }));
+    assert.deepEqual(quiet.rows['react-bot-event'], uncollapsed({ actor: 'bot', form: 'event', pinned: false, visible: false }));
+    assert.deepEqual(quiet.rows['react-bot-comment'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' });
+
     // Suggestions are nobody's review yet, so the bots button has no business with them.
     assert.equal(quiet.rows['suggested-human'].actor, undefined, 'a suggested reviewer is never classified');
     assert.equal(quiet.rows['suggested-human'].visible, true);
@@ -279,15 +284,38 @@ if (process.argv.includes('--serve')) {
 
     // A review is somebody saying something, even an approval that came with no comment.
     assert.deepEqual(quiet.rows['human-approval'], uncollapsed({ actor: 'human', form: 'comment', pinned: false, visible: true }));
+    assert.deepEqual(quiet.rows['human-changes'], uncollapsed({ actor: 'human', form: 'comment', pinned: false, visible: true }));
     assert.deepEqual(quiet.rows['human-reviewed'], uncollapsed({ actor: 'human', form: 'comment', pinned: false, visible: true }));
-    // A bot's approvals and change requests stay out by default; its comment-only reviews fold.
-    assert.deepEqual(quiet.rows['bot-approval'], uncollapsed({ actor: 'bot', form: 'comment', pinned: false, visible: true }),
-      'a bot approval stays whole while the bots are hidden');
-    assert.equal(quiet.strips['bot-approval'], undefined, 'with no strip built for it');
-    assert.deepEqual(quiet.rows['bot-changes'], uncollapsed({ actor: 'bot', form: 'comment', pinned: false, visible: true }),
+    assert.deepEqual(quiet.rows['human-odd-review'], uncollapsed({ actor: 'human', form: 'comment', pinned: false, visible: true }),
+      'a review whose badge is unfamiliar is still a review');
+    // A bot's approvals and change requests keep their verdict in view by default; the body folds.
+    assert.deepEqual(quiet.rows['bot-approval'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
+      'a kept bot approval folds while the bots are hidden');
+    assert.equal(quiet.strips['bot-approval'].preview, 'approved these changes', 'to its verdict, not the opening of its body');
+    assert.equal(quiet.strips['bot-approval'].title, 'Show this review');
+    assert.equal(quiet.strips['bot-approval'].bodyHidden, true, 'the body is what folds');
+    assert.equal(quiet.rows['gate-note'].fold, 'strip', 'a comment from the same bot just before it keeps its own strip');
+    assert.equal(quiet.strips['gate-note'].more, '', 'and does not swallow the verdict into its run');
+    assert.deepEqual(quiet.rows['bot-changes'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
       'and so does a bot change request with no comment');
+    assert.equal(quiet.strips['bot-changes'].preview, 'requested changes');
+    assert.equal(quiet.rows['bot-suggested'].fold, 'strip', 'a change request from a bot without write access is kept too');
+    assert.equal(quiet.strips['bot-suggested'].preview, 'requested changes', 'though GitHub draws it with an eye');
+    // The sidebar agrees: a bot whose approval is kept stays among the reviewers.
+    assert.deepEqual(quiet.rows['reviewer-approving-bot'], uncollapsed({ actor: 'bot', form: 'reviewer', pinned: false, visible: true }),
+      'a kept bot approval stays in the Reviewers sidebar too');
     assert.deepEqual(quiet.rows['bot-reviewed'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
       'a bot review that only commented folds like its comments');
+    assert.equal(quiet.strips['bot-image-review'].preview, 'reviewed', 'a review with no words in its body says what it did');
+
+    // A kept review opens like any bot comment, and has a Hide to fold it again.
+    await evaluate('document.querySelector(\'[data-row="bot-approval"] > .prlanes-strip\').click()');
+    const verdictOpen = await until('a kept review to open', (state) => state.rows['bot-approval'].fold === 'open');
+    assert.equal(verdictOpen.strips['bot-approval'].bodyHidden, false, 'its body is there');
+    assert.equal(verdictOpen.strips['bot-approval'].hideShown, true, 'with a Hide');
+    await evaluate('document.querySelector(\'[data-row="bot-approval"] .prlanes-hide\').click()');
+    await until('the Hide to fold the kept review back', (state) => state.rows['bot-approval'].fold === 'strip');
+
     // A bot set to show only its latest loses the earlier verdicts altogether and keeps the newest whole.
     assert.deepEqual(quiet.rows['stamphog-old'], uncollapsed({ actor: 'bot', form: 'comment', pinned: false, visible: false }),
       'an earlier stamphog verdict goes altogether');
@@ -391,6 +419,7 @@ if (process.argv.includes('--serve')) {
     const still = await until('timeline events to go', (state) => state.hiding.events.on);
     assert.equal(still.hiding.events.label, 'Show events');
     assert.equal(still.rows['human-event'].visible, false, 'a person labelling something is still an event');
+    assert.equal(still.rows['react-human-event'].visible, false, 'on the React issue timeline too');
     assert.equal(still.rows['human-commit'].visible, false, 'and so is a commit');
     assert.equal(still.rows['bot-commit'].visible, false, 'still: bot-commit gone');
     assert.equal(still.rows['pr-body'].visible, true, 'comments are untouched by the events button');
@@ -398,18 +427,23 @@ if (process.argv.includes('--serve')) {
     assert.equal(still.rows['bot-comment'].fold, 'strip', 'and the bots button is still doing its own job');
     assert.equal(still.rows['human-approval'].visible, true, 'an approval is a review, not an event');
     assert.equal(still.rows['human-changes'].visible, true, 'and so is a change request');
+    assert.equal(still.rows['human-odd-review'].visible, true, 'and a review whatever its badge');
     assert.equal(still.rows['bot-approval'].visible, true, 'a kept bot approval ignores the events button too');
 
     // Each kind of bot review is kept or folded on its own.
     await settings({ keepBotApprovals: false, keepBotChangeRequests: false, keepBotReviewComments: true });
-    const swapped = await until('the kept bot reviews to swap', (state) => state.rows['bot-approval'].fold === 'strip');
-    assert.equal(swapped.rows['bot-changes'].fold, 'strip', 'a bot change request folds once it is not kept');
+    const swapped = await until('the kept bot reviews to swap', (state) => state.strips['bot-approval'].preview === 'Nothing blocking, good to merge.');
+    assert.equal(swapped.rows['bot-approval'].fold, 'gone', 'an approval no longer kept joins the run of the comment before it');
+    assert.equal(swapped.strips['gate-note'].more, '+1 more');
+    assert.equal(swapped.rows['reviewer-approving-bot'].visible, false, 'and its sidebar row goes with the bots');
+    assert.equal(swapped.rows['bot-changes'].fold, 'strip', 'a bot change request still folds once it is not kept');
     assert.equal(swapped.strips['bot-changes'].preview, 'requested changes', 'and its strip says what it did, having no comment');
-    assert.equal(swapped.rows['bot-reviewed'].fold, null, 'a kept comment-only review stays whole');
-    assert.equal(swapped.rows['bot-reviewed'].visible, true);
+    assert.equal(swapped.strips['bot-reviewed'].preview, 'reviewed', 'a kept comment-only review folds to its verdict');
+    assert.equal(swapped.rows['reviewer-bot'].visible, true, 'and the bot that left review comments stays in the sidebar');
     assert.equal(swapped.rows['bot-comment'].fold, 'strip', 'while ordinary bot comments still fold');
     await settings({ keepBotApprovals: true, keepBotChangeRequests: true, keepBotReviewComments: false });
-    await until('the default bot reviews to come back', (state) => state.rows['bot-approval'].fold === null && state.rows['bot-reviewed'].fold === 'strip');
+    await until('the default bot reviews to come back', (state) =>
+      state.strips['bot-approval'].preview === 'approved these changes' && state.strips['bot-reviewed'].preview === 'Two style nits below.');
 
     // Cleared, the list stops singling a bot out and its verdicts fold into one run like any other.
     await settings({ latestOnlyBots: '' });
@@ -492,6 +526,8 @@ if (process.argv.includes('--serve')) {
     assert.equal(gone.rows['bot-comment'].fold, null);
     assert.equal(gone.rows['human-thread'].visible, true, 'people are untouched either way');
     assert.equal(gone.hiding.bots.lit, true, 'the button still knows there is something to hide');
+    assert.equal(gone.rows['bot-approval'].fold, 'strip', 'a kept review still leaves its verdict behind');
+    assert.equal(gone.strips['bot-approval'].preview, 'approved these changes');
     await settings({ collapseBots: true });
     const back = await until('the strips to come back', (state) => state.rows['bot-comment'].fold === 'strip');
     assert.equal(back.strips['bot-comment'].preview, 'All checks have passed.');

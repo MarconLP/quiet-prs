@@ -70,12 +70,20 @@
     '.js-comment-container',
     '.review-comment',
     '[data-testid="issue-body"]',
-    '[data-testid="comment-viewer-outer-box"]',
+    // The issue page now suffixes this with the comment's node id: comment-viewer-outer-box-IC_…
+    '[data-testid^="comment-viewer-outer-box"]',
     '[data-testid="issue-comment"]',
-    '[data-testid="pr-review-comment"]'
+    '[data-testid="pr-review-comment"]',
+    // The new pull request overview: each comment is an <article> keyed by its comment id.
+    'article[id^="issuecomment-"]'
   ].join(',');
 
-  const COMMENT_BODY_SELECTOR = '.comment-body, .js-comment-body, [data-testid="markdown-body"]';
+  const COMMENT_BODY_SELECTOR = [
+    '.comment-body',
+    '.js-comment-body',
+    '[data-testid="markdown-body"]',
+    'article[id^="issuecomment-"] .markdown-body'
+  ].join(',');
 
   const OWN_SELECTOR = '.prlanes-strip';
 
@@ -86,7 +94,8 @@
     '[data-testid="avatar-link"]',
     '[data-testid="issue-body-header-author"]',
     '[data-testid="comment-header-author"]',
-    '[data-testid="author-link"]'
+    '[data-testid="author-link"]',
+    '[data-testid="actor-link"]'
   ].join(',');
 
   const AVATAR_SELECTOR = 'img[class*="avatar" i], img[data-component="Avatar"], img[src*="avatars."]';
@@ -115,6 +124,7 @@
   const TIMELINE_BADGE_SELECTOR = ':scope > .TimelineItem-badge, :scope > [class*="TimelineItem-badge"]';
   const COMMIT_ICON_SELECTOR = '.octicon-git-commit';
   const COMMIT_GID = /^C_/;
+  const COMMIT_GROUP_SELECTOR = '[data-testid="timeline-commit-group"], [data-testid="timeline-commit-row"]';
 
   // A review row carries a PRR_ id, and its badge says how it ended.
   const REVIEW_GID = /^PRR_/;
@@ -122,6 +132,13 @@
     ['approved', '.octicon-check'],
     ['changes', '.octicon-file-diff'],
     ['commented', '.octicon-eye']
+  ];
+
+  // A reviewer without write access gets the eye whatever they decided, so the header line has to
+  // say it: GitHub writes "suggested changes" where a reviewer who counts "requested changes".
+  const REVIEW_WORDS = [
+    ['approved', /\bapproved these changes\b/],
+    ['changes', /\b(?:requested|suggested) changes\b/]
   ];
 
   // An approval needs no comment, so its strip says what it did instead.
@@ -149,7 +166,9 @@
     '.TimelineItem',
     '[data-testid="timeline-item"]',
     '[data-testid="issue-comment"]',
-    '[data-testid="issue-timeline-item"]'
+    '[data-testid="issue-timeline-item"]',
+    // The React issue timeline is a list whose every entry, comment or event, carries its node id.
+    '[data-wrapper-timeline-id]'
   ].join(',');
 
   const FILES_ROOT_SELECTOR = '#files, [data-testid="diff-view"], .js-diff-progressive-container';
@@ -161,6 +180,11 @@
   const REVIEWER_LINK_SELECTOR = 'a[href^="/apps/"], a[data-hovercard-url], a.assignee, a[href^="/orgs/"]';
 
   const ASSIGNED_SELECTOR = '[data-assignee-name]';
+
+  // A reviewer's status in the sidebar is the same verdict as their review, drawn with a comment
+  // bubble where the timeline has an eye. Awaiting a review is a dot, and is no verdict at all.
+  const REVIEWER_STATUS_SELECTOR = '.reviewers-status-icon';
+  const REVIEWER_ICONS = REVIEW_ICONS.concat([['commented', '.octicon-comment']]);
 
   const THREAD_SELECTOR = [
     '.js-resolvable-timeline-thread-container',
@@ -341,18 +365,36 @@
 
   function isCommit(row) {
     if (COMMIT_GID.test(rowGid(row))) return true;
+    // The new pull request overview groups pushes into rows of their own, with no badge or gid.
+    if (row.querySelector(COMMIT_GROUP_SELECTOR)) return true;
 
     const badge = timelineBadge(row);
     return Boolean(badge && badge.querySelector(COMMIT_ICON_SELECTOR));
   }
 
+  // The outcome named by whichever of the icons the element draws.
+  function iconOutcome(element, icons, fallback) {
+    const match = element && icons.find(([, selector]) => element.querySelector(selector));
+    return match ? match[0] : fallback;
+  }
+
+  // The words beside the reviewer's name, without the name, the timestamp or anything they wrote.
+  function reviewWords(badge) {
+    const body = badge && badge.parentElement && badge.parentElement.querySelector(':scope > .TimelineItem-body');
+    if (!body) return '';
+    const line = body.querySelector(':scope > div') || body;
+    const said = Array.from(line.childNodes, (node) => (node.nodeType === 3 ? node.textContent : '')).join(' ');
+    const match = REVIEW_WORDS.find(([, words]) => words.test(said));
+    return match ? match[0] : '';
+  }
+
   function reviewOutcome(row) {
     if (!REVIEW_GID.test(rowGid(row))) return '';
 
+    // A badge this cannot read is still a review, so it counts as the plainest kind.
     const badge = timelineBadge(row);
-    if (!badge) return '';
-    const match = REVIEW_ICONS.find(([, selector]) => badge.querySelector(selector));
-    return match ? match[0] : '';
+    const outcome = iconOutcome(badge, REVIEW_ICONS, 'commented');
+    return outcome === 'commented' ? reviewWords(badge) || outcome : outcome;
   }
 
   function isPrBody(row) {
@@ -415,9 +457,14 @@
     return Boolean(body) && rules.hiddenComments.has(normalizePhrase(body.textContent || ''));
   }
 
-  function commentPreview(row) {
+  function reviewVerdict(review) {
+    return REVIEW_WORDING[review] || '';
+  }
+
+  function commentPreview(row, review) {
     const body = row.querySelector(COMMENT_BODY_SELECTOR);
-    const text = body ? (body.textContent || '').replace(/\s+/g, ' ').trim() : REVIEW_WORDING[reviewOutcome(row)] || '';
+    const said = body ? (body.textContent || '').replace(/\s+/g, ' ').trim() : '';
+    const text = said || reviewVerdict(review);
     return text.length > PREVIEW_LIMIT ? `${text.slice(0, PREVIEW_LIMIT).trimEnd()}\u2026` : text;
   }
 
@@ -473,9 +520,10 @@
   function classifyReviewer(row, rules) {
     const author = readIdentity(row, row.querySelector(REVIEWER_LINK_SELECTOR), null);
     const actor = classifyAuthor(author, rules);
+    const review = iconOutcome(row.querySelector(REVIEWER_STATUS_SELECTOR), REVIEWER_ICONS, '');
     // A bot whose latest verdict you keep is a reviewer you are waiting on, so its row stays too.
     const keep = actor === 'bot' && rules.latestOnly.has(author.login);
-    return { actor, form: 'reviewer', keep };
+    return { actor, form: 'reviewer', review, keep };
   }
 
   function outermost(elements, root) {
@@ -548,6 +596,7 @@
     normalizeLogin,
     parseLoginList,
     resolvableThreads,
+    reviewVerdict,
     reviewerRows,
     threadRows,
     timelineRows
