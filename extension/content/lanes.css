@@ -67,6 +67,8 @@
 
 .prlanes-bar--header,
 .prlanes-bar--issue,
+.prlanes-bar--summary,
+.prlanes-bar--mini,
 .prlanes-bar--tabs {
   position: static;
   padding: 0;
@@ -78,6 +80,14 @@
 
 .prlanes-bar--issue {
   margin: 0;
+}
+
+.prlanes-bar--summary {
+  margin: 0 0 0 4px;
+}
+
+.prlanes-bar--mini {
+  margin: 0 8px 0 0;
 }
 
 .prlanes-bar--header {
@@ -233,6 +243,15 @@
   overflow: hidden;
   white-space: nowrap;
   text-overflow: ellipsis;
+}
+
+/* A kept review's verdict reads in the colour GitHub gives it. */
+.prlanes-strip--approved .prlanes-strip-preview {
+  color: var(--fgColor-success, var(--color-success-fg, #1a7f37));
+}
+
+.prlanes-strip--changes .prlanes-strip-preview {
+  color: var(--fgColor-danger, var(--color-danger-fg, #d1242f));
 }
 
 .prlanes-strip-hint {

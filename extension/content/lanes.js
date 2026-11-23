@@ -28,14 +28,23 @@
   let fitted = null;
   let lastUrl = location.href;
 
-  const STICKY_HEADER_SELECTOR = '[class*="stickyHeader" i], .gh-header-sticky, [data-testid*="sticky-header"]';
+  // GitHub's CSS module classes have gone from `Module-module__name__hash` to `name__hash`, so the
+  // lookups below key on `name__`. The trailing underscores matter: the page also carries a
+  // `stickyHeaderSentinel__` and a `stickyHeaderActivationThreshold__`, which are not the header.
+  const STICKY_HEADER_SELECTOR = '[class*="stickyHeader__" i], .gh-header-sticky, [data-testid*="sticky-header"]';
   const ISSUE_STICKY_ROW_SELECTOR = '[data-testid="issue-metadata-sticky"] [class*="stickyContent"]';
   const HEADER_SELECTOR = '[class*="PullRequestHeader"], [class*="PageHeader-PageHeader"], .gh-header-show';
   const HEADER_SLOT_SELECTOR = '[class*="PageHeader-TitleArea"], .gh-header-title';
   const TAB_NAV_SELECTOR = 'nav[class*="TabNav"], nav.tabnav-tabs, .tabnav-tabs';
   const STATE_SELECTOR = '[data-testid="header-state"], .gh-header-meta .State';
-  const STATE_ROW_SELECTOR = '[class*="HeaderMetadata-module__metadataContent"], [class*="metadataContent"], .gh-header-meta';
-  const DIFFSTAT_SELECTOR = '[class*="PullRequestHeader-module__rightContentWrapper"]';
+  const STATE_ROW_SELECTOR = '[class*="metadataContent__"], .gh-header-meta';
+  const DIFFSTAT_SELECTOR = '[class*="rightContentWrapper__"]';
+  // The new pull request overview keeps a slim title bar pinned at the top at all times, so it
+  // cannot stand for "scrolled past the header" the way the old sticky header did. Its +/- count
+  // sits in the summary line under the title instead of at the end of the tab row.
+  const MINI_HEADER_SELECTOR = '[data-testid="diff-comparison-viewer-sticky-header-bar"]';
+  const MINI_HEADER_ACTIONS_SELECTOR = '[class*="actions__"]';
+  const SUMMARY_DIFFSTAT_SELECTOR = '[class*="diffStat__"]';
   const COMMENT_ACTIONS_SELECTOR = '.timeline-comment-actions, [data-testid="comment-header-right-side-items"]';
   const COMMENT_HEADER_SELECTOR = '.timeline-comment-header, .review-comment-header, [data-testid="comment-header"]';
 
@@ -73,14 +82,18 @@
   }
 
   // A bot comment you have hidden still leaves a mark: one line you can click to bring them back.
+  // A review you keep always does, collapsing or not, since its verdict is the part worth seeing.
   function strippable(row) {
     return (
-      settings.collapseBots &&
+      (settings.collapseBots || kept(row)) &&
       row.dataset.prlanesForm === 'comment' &&
       row.dataset.prlanesPin !== '1' &&
-      row.dataset.prlanesKeep !== '1' &&
       !TABLE_TAGS.test(row.tagName)
     );
+  }
+
+  function kept(row) {
+    return row.dataset.prlanesKeep === '1';
   }
 
   function botComment(row) {
@@ -131,14 +144,17 @@
       ? make('img', { class: 'prlanes-strip-face', src: kind.avatar, alt: '' })
       : make('span', { class: 'prlanes-strip-face' }, [icon(kind.actor)]);
 
+    // A kept review folds to its verdict alone: the body is what the bots button is hiding.
+    const verdict = kept(row);
+
     return make('button', {
       type: 'button',
-      class: STRIP_CLASS,
-      title: 'Show this comment'
+      class: verdict ? `${STRIP_CLASS} ${STRIP_CLASS}--${kind.review}` : STRIP_CLASS,
+      title: verdict ? 'Show this review' : 'Show this comment'
     }, [
       face,
       make('span', { class: 'prlanes-strip-who' }, [kind.login || NOBODY[kind.actor]]),
-      make('span', { class: 'prlanes-strip-preview' }, [lanes.commentPreview(row)]),
+      make('span', { class: 'prlanes-strip-preview' }, [verdict ? lanes.reviewVerdict(kind.review) : lanes.commentPreview(row, kind.review)]),
       make('span', { class: 'prlanes-strip-more' }),
       make('span', { class: 'prlanes-strip-hint' }, ['Show'])
     ]);
@@ -171,6 +187,7 @@
   }
 
   // Back-to-back comments from the same bot are one thing to read, so they are one thing to fold.
+  // A kept review stands alone, or its verdict would vanish into the strip of the comment above.
   function foldRuns(allRows) {
     // A stale verdict is gone altogether, so it does not split the runs either side of it.
     const rows = allRows.filter((row) => row.dataset.prlanesLatest !== 'stale');
@@ -188,8 +205,11 @@
       }
 
       const login = leader.dataset.prlanesLogin || '';
+      const review = kept(leader);
       let end = index + 1;
-      while (end < rows.length && foldable(rows[end]) && (rows[end].dataset.prlanesLogin || '') === login) end += 1;
+      if (!review) {
+        while (end < rows.length && foldable(rows[end]) && !kept(rows[end]) && (rows[end].dataset.prlanesLogin || '') === login) end += 1;
+      }
 
       const run = end - index;
       const open = wantsOpen(leader);
@@ -198,7 +218,7 @@
       setText(leader.querySelector('.prlanes-strip-more'), run > 1 ? `+${run - 1} more` : '');
       const control = leader.querySelector(`.${HIDE_CLASS}`);
       if (control) {
-        setAttr(control, 'title', run > 1 ? `Hide these ${run} comments` : 'Hide this comment');
+        setAttr(control, 'title', run > 1 ? `Hide these ${run} comments` : `Hide this ${review ? 'review' : 'comment'}`);
         if (open) placeHide(leader, control);
       }
 
@@ -211,6 +231,15 @@
     }
   }
 
+  // The old conversation runs oldest first and the new pull request overview newest first, so
+  // the timestamps decide which of two rows is newer. Without both, the later one on the page is.
+  function newer(row, than) {
+    const at = Date.parse(row.dataset.prlanesTime || '');
+    const thanAt = Date.parse(than.dataset.prlanesTime || '');
+    if (Number.isNaN(at) || Number.isNaN(thanAt)) return true;
+    return at >= thanAt;
+  }
+
   // Some bots post a fresh verdict on every push, and only the newest one still says anything.
   // Their earlier comments and reviews go altogether while the bots are hidden; the latest stays whole.
   function markLatest(rows) {
@@ -221,7 +250,10 @@
       row.dataset.prlanesPin !== '1' &&
       rules.latestOnly.has(row.dataset.prlanesLogin || '')
     ));
-    for (const row of candidates) latest.set(row.dataset.prlanesLogin, row);
+    for (const row of candidates) {
+      const best = latest.get(row.dataset.prlanesLogin);
+      if (!best || newer(row, best)) latest.set(row.dataset.prlanesLogin, row);
+    }
 
     for (const row of rows) {
       if (!candidates.has(row)) delete row.dataset.prlanesLatest;
@@ -249,6 +281,8 @@
         else delete row.dataset.prlanesKeep;
         if (kind.routine) setData(row, 'prlanesRoutine', '1');
         else delete row.dataset.prlanesRoutine;
+        if (kind.time) setData(row, 'prlanesTime', kind.time);
+        else delete row.dataset.prlanesTime;
         fillStrip(row, kind);
       }
     }
@@ -257,7 +291,7 @@
 
     for (const row of rows) {
       const form = row.dataset.prlanesForm;
-      if (row.dataset.prlanesPin === '1' || row.dataset.prlanesKeep === '1' || row.dataset.prlanesLatest === 'latest') continue;
+      if (row.dataset.prlanesPin === '1' || row.dataset.prlanesLatest === 'latest') continue;
       if (form === 'comment' && (row.dataset.prlanesActor === 'bot' || row.dataset.prlanesRoutine === '1')) counts.bots += 1;
       if (form === 'event' || form === 'commit') counts.events += 1;
     }
@@ -392,9 +426,27 @@
     return visible(row) ? row : null;
   }
 
+  // At rest the bar trails the +/- count under the title. Once that count scrolls under the
+  // pinned title bar, the bar moves into it, ahead of Merge status and Submit review.
+  function overviewSlot() {
+    const mini = document.querySelector(MINI_HEADER_SELECTOR);
+    if (!visible(mini)) return null;
+
+    const stat = document.querySelector(SUMMARY_DIFFSTAT_SELECTOR);
+    if (visible(stat) && stat.getBoundingClientRect().top >= mini.getBoundingClientRect().bottom) {
+      return { element: stat.parentElement, variant: 'summary', after: stat };
+    }
+
+    const actions = mini.querySelector(MINI_HEADER_ACTIONS_SELECTOR);
+    return actions ? { element: actions, variant: 'mini', sticky: true, lead: true } : null;
+  }
+
   function barSlot() {
     const issueRow = issueStickyRow();
     if (issueRow) return { element: issueRow, variant: 'issue', sticky: true, before: issueRow.lastElementChild };
+
+    const overview = overviewSlot();
+    if (overview) return overview;
 
     const sticky = document.querySelector(STICKY_HEADER_SELECTOR);
     if (visible(sticky)) return { element: sticky.querySelector(HEADER_SLOT_SELECTOR) || sticky, variant: 'header', sticky: true, fit: true };
@@ -447,12 +499,16 @@
     bar.classList.toggle('prlanes-bar--diff', variant === 'diff');
     bar.classList.toggle('prlanes-bar--state', variant === 'state');
     bar.classList.toggle('prlanes-bar--issue', variant === 'issue');
+    bar.classList.toggle('prlanes-bar--summary', variant === 'summary');
+    bar.classList.toggle('prlanes-bar--mini', variant === 'mini');
     bar.classList.toggle('prlanes-bar--sticky', Boolean(slot && slot.sticky));
 
     fitTo(slot && slot.fit ? slot.element : null);
 
     if (slot) {
-      if (slot.before) {
+      if (slot.after) {
+        if (slot.after.nextElementSibling !== bar) slot.after.after(bar);
+      } else if (slot.before) {
         if (bar.nextElementSibling !== slot.before) slot.element.insertBefore(bar, slot.before);
       } else if (slot.lead) {
         if (slot.element.firstElementChild !== bar) slot.element.prepend(bar);

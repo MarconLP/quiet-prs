@@ -5,22 +5,24 @@
     <title>Quiet PRs end-to-end page</title>
   </head>
   <body>
-    <div class="use-sticky-header-module__stickyHeader__sf0hv prc-PageHeader-PageHeader-YLwBQ" data-role="sticky" style="display: none">
+    <div class="stickyHeaderSentinel__lNt767" style="height: 1px"></div>
+    <div class="stickyHeaderActivationThreshold__WEJcTE" style="height: 1px"></div>
+    <div class="prc-PageHeader-PageHeader-YLwBQ stickyHeader__OQ39Id prHeader__O574tV" data-role="sticky" style="display: none">
       <div class="prc-PageHeader-TitleArea-2n2J0">
         <h2 class="prc-PageHeader-Title-p0Mgh">chore(ci): pin ubuntu-latest runners</h2>
       </div>
     </div>
 
-    <div class="prc-PageHeader-PageHeader-YLwBQ PullRequestHeader-module__header__abc12" data-role="header">
+    <div class="prc-PageHeader-PageHeader-YLwBQ headerContainer__MoQpha" data-role="header">
       <div class="prc-PageHeader-TitleArea-2n2J0">
         <h1 class="prc-PageHeader-Title-p0Mgh">chore(ci): pin ubuntu-latest runners</h1>
       </div>
       <div class="prc-PageHeader-Navigation--uLav">
-        <div class="PullRequestHeader-module__rightContentWrapper__MrqTF" data-role="diffstat" style="float: right; display: flex">
+        <div class="rightContentWrapper__DE7XPN hideWhenVeryNarrowContainer__gKh_VK" data-role="diffstat" style="float: right; display: flex">
           <span class="diffstat">+4,593 -14</span>
         </div>
-        <nav class="PullRequestHeaderTabNav-module__nav__abc">
-          <div class="PullRequestHeaderTabNav-module__TabNavList__d_nKN">
+        <nav class="TabNav__qHkBGx">
+          <div class="TabNavList__wLlQxB">
             <a href="#conversation">Conversation</a>
             <a href="#files">Files changed</a>
           </div>
@@ -28,7 +30,7 @@
       </div>
     </div>
 
-    <div class="HeaderMetadata-module__metadataContent__Dg2N7" data-role="state-row">
+    <div class="metadataContent__tO2lBl" data-role="state-row">
       <div><span class="prc-StateLabel-StateLabel-Iawzp" data-testid="header-state">Open</span></div>
     </div>
 
@@ -40,8 +42,16 @@
             <a href="/apps/coderabbitai"><img class="avatar" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="coderabbitai" /></a>
             <a class="assignee" href="/apps/coderabbitai">coderabbitai[bot]</a>
           </span>
-          <a id="review-status-coderabbitai" class="flex-order-1" data-role="bot-status" href="/PostHog/posthog/pull/1/files/abc"><span class="reviewers-status-icon">&#9744;</span></a>
+          <a id="review-status-coderabbitai" class="flex-order-1" data-role="bot-status" href="/PostHog/posthog/pull/1/files/abc"><span class="reviewers-status-icon"><svg class="octicon octicon-comment" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><path d="M1 2.75C1 1.784 1.784 1 2.75 1h10.5c.966 0 1.75.784 1.75 1.75v7.5A1.75 1.75 0 0 1 13.25 12H9.06l-2.573 2.573A1.458 1.458 0 0 1 4 13.543V12H2.75A1.75 1.75 0 0 1 1 10.25Z"></path></svg></span></a>
           <tool-tip for="review-status-coderabbitai" data-role="bot-tooltip">coderabbitai[bot] left review comments</tool-tip>
+        </div>
+        <div class="d-flex flex-items-center mb-2" data-row="reviewer-approving-bot">
+          <span class="d-flex min-width-0" data-assignee-name="review-gate[bot]">
+            <a href="/apps/review-gate"><img class="avatar" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="review-gate" /></a>
+            <a class="assignee" href="/apps/review-gate">review-gate[bot]</a>
+          </span>
+          <a id="review-status-review-gate" class="flex-order-1" href="/PostHog/posthog/pull/1/files/abc"><span class="reviewers-status-icon text-center"><svg class="octicon octicon-check color-fg-success" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg></span></a>
+          <tool-tip for="review-status-review-gate">review-gate[bot] approved these changes</tool-tip>
         </div>
         <div class="d-flex flex-items-center mb-2" data-row="reviewer-latest-only">
           <span class="d-flex min-width-0" data-assignee-name="stamphog[bot]">
@@ -361,6 +371,18 @@
           </div>
         </div>
 
+        <div class="js-timeline-item" data-row="gate-note">
+          <div class="TimelineItem">
+            <div class="timeline-comment js-comment-container">
+              <div class="timeline-comment-header">
+                <a class="author" href="/apps/review-gate">review-gate</a>
+                <span class="Label">bot</span> commented
+              </div>
+              <div class="comment-body">Checking the gate.</div>
+            </div>
+          </div>
+        </div>
+
         <div class="js-timeline-item" data-row="bot-approval" data-gid="PRR_kwDOaaaaaaa4">
           <div class="TimelineItem">
             <div class="TimelineItem-badge"><svg class="octicon octicon-check" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.75.75 0 0 1 1.06-1.06L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path></svg></div>
@@ -384,6 +406,19 @@
           </div>
         </div>
 
+        <div class="js-timeline-item" data-row="bot-suggested" data-gid="PRR_kwDOaaaaaaa9">
+          <div class="TimelineItem">
+            <div aria-label="Only reviews by reviewers with write access count toward mergeability" class="TimelineItem-badge"><svg class="octicon octicon-eye" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14Z"></path></svg></div>
+            <div class="TimelineItem-body d-flex">
+              <div class="flex-auto">
+                <strong><a class="author" href="/apps/security-scout">security-scout</a> <span class="Label">Bot</span></strong>
+                suggested changes
+                <span class="color-fg-muted"><a href="#pullrequestreview-9">Oct 15, 2026</a></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div class="js-timeline-item" data-row="bot-reviewed" data-gid="PRR_kwDOaaaaaaa6">
           <div class="TimelineItem">
             <div class="TimelineItem-badge"><svg class="octicon octicon-eye" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14Z"></path></svg></div>
@@ -397,7 +432,29 @@
           </div>
         </div>
 
-        <div class="js-timeline-item" data-row="stamphog-old" data-gid="PRR_kwDOaaaaaaa7">
+        <div class="js-timeline-item" data-row="bot-image-review" data-gid="PRR_kwDOaaaaaaa7">
+          <div class="TimelineItem">
+            <div class="TimelineItem-badge"><svg class="octicon octicon-eye" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14Z"></path></svg></div>
+            <div class="timeline-comment js-comment-container">
+              <div class="timeline-comment-header">
+                <a class="author" href="/apps/badge-reporter">badge-reporter</a>
+                <span class="Label">bot</span> reviewed
+              </div>
+              <div class="comment-body"><img src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="" /></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="js-timeline-item" data-row="human-odd-review" data-gid="PRR_kwDOaaaaaaa8">
+          <div class="TimelineItem">
+            <div class="TimelineItem-badge"><svg class="octicon octicon-x" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><path d="M3.72 3.72a.75.75 0 0 1 1.06 0L8 6.94l3.22-3.22a.75.75 0 1 1 1.06 1.06L9.06 8l3.22 3.22a.75.75 0 1 1-1.06 1.06L8 9.06l-3.22 3.22a.75.75 0 0 1-1.06-1.06L6.94 8 3.72 4.78a.75.75 0 0 1 0-1.06Z"></path></svg></div>
+            <div class="TimelineItem-body">
+              <strong><a class="author" href="/gantoine">gantoine</a></strong> reviewed
+            </div>
+          </div>
+        </div>
+
+        <div class="js-timeline-item" data-row="stamphog-old" data-gid="PRR_kwDOaaaaaab1">
           <div class="TimelineItem">
             <div class="TimelineItem-badge"><svg class="octicon octicon-eye" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14Z"></path></svg></div>
             <div class="timeline-comment js-comment-container">
@@ -410,7 +467,7 @@
           </div>
         </div>
 
-        <div class="js-timeline-item" data-row="stamphog-new" data-gid="PRR_kwDOaaaaaaa8">
+        <div class="js-timeline-item" data-row="stamphog-new" data-gid="PRR_kwDOaaaaaab2">
           <div class="TimelineItem">
             <div class="TimelineItem-badge"><svg class="octicon octicon-eye" aria-hidden="true" viewBox="0 0 16 16" width="16" height="16"><path d="M8 2c1.981 0 3.671.992 4.933 2.078 1.27 1.091 2.187 2.345 2.637 3.023a1.62 1.62 0 0 1 0 1.798c-.45.678-1.367 1.932-2.637 3.023C11.67 13.008 9.981 14 8 14Z"></path></svg></div>
             <div class="timeline-comment js-comment-container">
@@ -442,6 +499,95 @@
               </div>
               <div class="comment-body"><p>@codex review the migration first</p></div>
             </div>
+          </div>
+        </div>
+
+        <ol data-testid="issue-timeline-container">
+          <li data-wrapper-timeline-id="LE_aaaa1" data-row="react-human-event">
+            <a data-testid="actor-link" href="/gantoine"><img data-component="Avatar" alt="" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" /><span>gantoine</span></a>
+            added <span>bug</span>
+          </li>
+          <li data-wrapper-timeline-id="LE_aaaa2" data-row="react-bot-event">
+            <a data-testid="actor-link" href="/apps/github-actions"><img data-component="Avatar" alt="" src="https://avatars.githubusercontent.com/in/15368?s=64" /><span>github-actions</span></a>
+            added <span>needs-triage</span>
+          </li>
+          <li data-wrapper-timeline-id="IC_aaaa3" data-row="react-bot-comment">
+            <div data-timeline-event-id="IC_aaaa3">
+              <div data-testid="comment-viewer-outer-box-IC_aaaa3">
+              <div data-testid="comment-header">
+                <a data-testid="avatar-link" href="/apps/github-actions">github-actions</a>
+                <span data-component="Label">bot</span>
+              </div>
+              <div data-testid="markdown-body"><p>Triaged by rule.</p></div>
+              </div>
+            </div>
+          </li>
+        </ol>
+
+        <!-- The new pull request overview: newest first, each review an <article> keyed by its review id. -->
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="review_summary" data-row="overview-review-new">
+          <div>
+            <article id="pullrequestreview-9003" class="container__rfx-3s approvedStatus__y5LsA7">
+              <div class="ActivityHeaderContainer__sf0_ID" data-testid="comment-header">
+                <h3 class="sr-only">verdict-bot commented <relative-time datetime="2026-11-23T15:15:14.000Z">on Nov 23, 2026</relative-time></h3>
+                <div data-testid="comment-header-left-side-items">
+                  <a class="AuthorName__V4JPE4" data-testid="avatar-link" href="/apps/verdict-bot">verdict-bot</a>
+                <span class="prc-Label-Label-qG-Zu" data-component="Label">Bot</span>
+                  <div class="footer__7ecx1m"><span class="HeaderMutedText__fi4I0n">approved</span><span class="HeaderMutedText__fi4I0n"><relative-time datetime="2026-11-23T15:15:14.000Z">on Nov 23, 2026</relative-time></span></div>
+                </div>
+                <div data-testid="comment-header-right-side-items"></div>
+              </div>
+              <div class="body__APdwN2"><div class="markdown-body"><p>Approved: small and safe.</p></div></div>
+            </article>
+          </div>
+        </div>
+
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="commits" data-row="overview-commit">
+          <div data-testid="timeline-commit-group">
+            <div class="CommitRow__w1guph" data-testid="timeline-commit-row">
+              <a href="/PostHog/posthog/pull/1/changes/abc">Trim the batching comments</a>
+              <relative-time datetime="2026-11-23T15:01:52.000Z">Nov 23, 2026</relative-time>
+            </div>
+          </div>
+        </div>
+
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="review_summary" data-row="overview-review-old">
+          <div>
+            <article id="pullrequestreview-9002" class="container__rfx-3s dismissedStatus__0UWQ9Z">
+              <div class="ActivityHeaderContainer__sf0_ID" data-testid="comment-header">
+                <h3 class="sr-only">verdict-bot commented <relative-time datetime="2026-11-23T14:48:55.000Z">on Nov 23, 2026</relative-time></h3>
+                <div data-testid="comment-header-left-side-items">
+                  <a class="AuthorName__V4JPE4" data-testid="avatar-link" href="/apps/verdict-bot">verdict-bot</a>
+                <span class="prc-Label-Label-qG-Zu" data-component="Label">Bot</span>
+                  <div class="footer__7ecx1m"><span class="HeaderMutedText__fi4I0n">previously approved</span><span class="HeaderMutedText__fi4I0n"><relative-time datetime="2026-11-23T14:48:55.000Z">on Nov 23, 2026</relative-time></span></div>
+                </div>
+                <div data-testid="comment-header-right-side-items"></div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="review_summary" data-row="overview-human-review">
+          <div>
+            <article id="pullrequestreview-9001" class="container__rfx-3s approvedStatus__y5LsA7">
+              <div class="ActivityHeaderContainer__sf0_ID" data-testid="comment-header">
+                <h3 class="sr-only">gantoine commented <relative-time datetime="2026-11-23T14:40:00.000Z">on Nov 23, 2026</relative-time></h3>
+                <div data-testid="comment-header-left-side-items">
+                  <a class="AuthorName__V4JPE4" data-testid="avatar-link" href="/gantoine">gantoine</a>
+                  <div class="footer__7ecx1m"><span class="HeaderMutedText__fi4I0n">approved</span><span class="HeaderMutedText__fi4I0n"><relative-time datetime="2026-11-23T14:40:00.000Z">on Nov 23, 2026</relative-time></span></div>
+                </div>
+                <div data-testid="comment-header-right-side-items"></div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="review_summary" data-row="overview-thread">
+          <div id="pullrequestreview-9000" data-testid="review-thread-focus-target" aria-label="Review comment by verdict-bot[bot]" role="group">
+            <article class="container__rfx-3s">
+              <h2><a href="/PostHog/posthog/pull/1/changes/abc">src/batching.py</a> <span>Line 12</span></h2>
+              <span class="prc-Label-Label-qG-Zu" data-component="Label">Resolved</span>
+            </article>
           </div>
         </div>
 
