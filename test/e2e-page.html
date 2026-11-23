@@ -524,6 +524,73 @@
           </li>
         </ol>
 
+        <!-- The new pull request overview: newest first, each review an <article> keyed by its review id. -->
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="review_summary" data-row="overview-review-new">
+          <div>
+            <article id="pullrequestreview-9003" class="container__rfx-3s approvedStatus__y5LsA7">
+              <div class="ActivityHeaderContainer__sf0_ID" data-testid="comment-header">
+                <h3 class="sr-only">verdict-bot commented <relative-time datetime="2026-11-23T15:15:14.000Z">on Nov 23, 2026</relative-time></h3>
+                <div data-testid="comment-header-left-side-items">
+                  <a class="AuthorName__V4JPE4" data-testid="avatar-link" href="/apps/verdict-bot">verdict-bot</a>
+                <span class="prc-Label-Label-qG-Zu" data-component="Label">Bot</span>
+                  <div class="footer__7ecx1m"><span class="HeaderMutedText__fi4I0n">approved</span><span class="HeaderMutedText__fi4I0n"><relative-time datetime="2026-11-23T15:15:14.000Z">on Nov 23, 2026</relative-time></span></div>
+                </div>
+                <div data-testid="comment-header-right-side-items"></div>
+              </div>
+              <div class="body__APdwN2"><div class="markdown-body"><p>Approved: small and safe.</p></div></div>
+            </article>
+          </div>
+        </div>
+
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="commits" data-row="overview-commit">
+          <div data-testid="timeline-commit-group">
+            <div class="CommitRow__w1guph" data-testid="timeline-commit-row">
+              <a href="/PostHog/posthog/pull/1/changes/abc">Trim the batching comments</a>
+              <relative-time datetime="2026-11-23T15:01:52.000Z">Nov 23, 2026</relative-time>
+            </div>
+          </div>
+        </div>
+
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="review_summary" data-row="overview-review-old">
+          <div>
+            <article id="pullrequestreview-9002" class="container__rfx-3s dismissedStatus__0UWQ9Z">
+              <div class="ActivityHeaderContainer__sf0_ID" data-testid="comment-header">
+                <h3 class="sr-only">verdict-bot commented <relative-time datetime="2026-11-23T14:48:55.000Z">on Nov 23, 2026</relative-time></h3>
+                <div data-testid="comment-header-left-side-items">
+                  <a class="AuthorName__V4JPE4" data-testid="avatar-link" href="/apps/verdict-bot">verdict-bot</a>
+                <span class="prc-Label-Label-qG-Zu" data-component="Label">Bot</span>
+                  <div class="footer__7ecx1m"><span class="HeaderMutedText__fi4I0n">previously approved</span><span class="HeaderMutedText__fi4I0n"><relative-time datetime="2026-11-23T14:48:55.000Z">on Nov 23, 2026</relative-time></span></div>
+                </div>
+                <div data-testid="comment-header-right-side-items"></div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="review_summary" data-row="overview-human-review">
+          <div>
+            <article id="pullrequestreview-9001" class="container__rfx-3s approvedStatus__y5LsA7">
+              <div class="ActivityHeaderContainer__sf0_ID" data-testid="comment-header">
+                <h3 class="sr-only">gantoine commented <relative-time datetime="2026-11-23T14:40:00.000Z">on Nov 23, 2026</relative-time></h3>
+                <div data-testid="comment-header-left-side-items">
+                  <a class="AuthorName__V4JPE4" data-testid="avatar-link" href="/gantoine">gantoine</a>
+                  <div class="footer__7ecx1m"><span class="HeaderMutedText__fi4I0n">approved</span><span class="HeaderMutedText__fi4I0n"><relative-time datetime="2026-11-23T14:40:00.000Z">on Nov 23, 2026</relative-time></span></div>
+                </div>
+                <div data-testid="comment-header-right-side-items"></div>
+              </div>
+            </article>
+          </div>
+        </div>
+
+        <div class="ConnectedItem__fEJa3j" data-testid="timeline-item" data-item-type="review_summary" data-row="overview-thread">
+          <div id="pullrequestreview-9000" data-testid="review-thread-focus-target" aria-label="Review comment by verdict-bot[bot]" role="group">
+            <article class="container__rfx-3s">
+              <h2><a href="/PostHog/posthog/pull/1/changes/abc">src/batching.py</a> <span>Line 12</span></h2>
+              <span class="prc-Label-Label-qG-Zu" data-component="Label">Resolved</span>
+            </article>
+          </div>
+        </div>
+
         <div class="js-timeline-item" data-row="composer">
           <div class="TimelineItem">
             <img class="avatar" src="data:image/gif;base64,R0lGODlhAQABAAAAACw=" alt="gantoine" />

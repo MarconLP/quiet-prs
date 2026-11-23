@@ -231,6 +231,15 @@
     }
   }
 
+  // The old conversation runs oldest first and the new pull request overview newest first, so
+  // the timestamps decide which of two rows is newer. Without both, the later one on the page is.
+  function newer(row, than) {
+    const at = Date.parse(row.dataset.prlanesTime || '');
+    const thanAt = Date.parse(than.dataset.prlanesTime || '');
+    if (Number.isNaN(at) || Number.isNaN(thanAt)) return true;
+    return at >= thanAt;
+  }
+
   // Some bots post a fresh verdict on every push, and only the newest one still says anything.
   // Their earlier comments and reviews go altogether while the bots are hidden; the latest stays whole.
   function markLatest(rows) {
@@ -241,7 +250,10 @@
       row.dataset.prlanesPin !== '1' &&
       rules.latestOnly.has(row.dataset.prlanesLogin || '')
     ));
-    for (const row of candidates) latest.set(row.dataset.prlanesLogin, row);
+    for (const row of candidates) {
+      const best = latest.get(row.dataset.prlanesLogin);
+      if (!best || newer(row, best)) latest.set(row.dataset.prlanesLogin, row);
+    }
 
     for (const row of rows) {
       if (!candidates.has(row)) delete row.dataset.prlanesLatest;
@@ -269,6 +281,8 @@
         else delete row.dataset.prlanesKeep;
         if (kind.routine) setData(row, 'prlanesRoutine', '1');
         else delete row.dataset.prlanesRoutine;
+        if (kind.time) setData(row, 'prlanesTime', kind.time);
+        else delete row.dataset.prlanesTime;
         fillStrip(row, kind);
       }
     }

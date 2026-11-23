@@ -74,15 +74,18 @@
     '[data-testid^="comment-viewer-outer-box"]',
     '[data-testid="issue-comment"]',
     '[data-testid="pr-review-comment"]',
-    // The new pull request overview: each comment is an <article> keyed by its comment id.
-    'article[id^="issuecomment-"]'
+    // The new pull request overview: each comment is an <article> keyed by its comment id, and so
+    // is each review.
+    'article[id^="issuecomment-"]',
+    'article[id^="pullrequestreview-"]'
   ].join(',');
 
   const COMMENT_BODY_SELECTOR = [
     '.comment-body',
     '.js-comment-body',
     '[data-testid="markdown-body"]',
-    'article[id^="issuecomment-"] .markdown-body'
+    'article[id^="issuecomment-"] .markdown-body',
+    'article[id^="pullrequestreview-"] .markdown-body'
   ].join(',');
 
   const OWN_SELECTOR = '.prlanes-strip';
@@ -141,6 +144,18 @@
     ['changes', /\b(?:requested|suggested) changes\b/]
   ];
 
+  // The new pull request overview has no badge and no gid. A review there is an <article> keyed by
+  // its review id, and the line under the reviewer's name says how it ended.
+  const REVIEW_ARTICLE_SELECTOR = 'article[id^="pullrequestreview-"]';
+  const REVIEW_ARTICLE_HEADER_SELECTOR = '[data-testid="comment-header-left-side-items"]';
+  const REVIEW_ARTICLE_WORDS = [
+    ['approved', /^approved(?: these changes)?$/],
+    ['changes', /^(?:requested|suggested) changes$/]
+  ];
+
+  // When a row was written, wherever GitHub puts the timestamp.
+  const TIME_SELECTOR = 'relative-time[datetime], time[datetime]';
+
   // An approval needs no comment, so its strip says what it did instead.
   const REVIEW_WORDING = { approved: 'approved these changes', changes: 'requested changes', commented: 'reviewed' };
 
@@ -175,15 +190,16 @@
 
   const RESOLVABLE_THREAD_SELECTOR = '.js-resolvable-timeline-thread-container[data-resolved], review-thread-collapsible[data-resolved], [data-testid="review-thread"][data-resolved]';
 
-  const SIDEBAR_SECTION_SELECTOR = '.js-issue-sidebar-form, [data-testid*="reviewers"], [data-testid="sidebar-reviewers-section"]';
+  // The new pull request overview labels the section instead of giving it a test id.
+  const SIDEBAR_SECTION_SELECTOR = '.js-issue-sidebar-form, [data-testid*="reviewers"], [data-testid="sidebar-reviewers-section"], section[aria-label="Reviewers"]';
 
-  const REVIEWER_LINK_SELECTOR = 'a[href^="/apps/"], a[data-hovercard-url], a.assignee, a[href^="/orgs/"]';
+  const REVIEWER_LINK_SELECTOR = 'a[href^="/apps/"], a[data-hovercard-url], a.assignee, a[href^="/orgs/"], a[class*="reviewerIdentity__"]';
 
   const ASSIGNED_SELECTOR = '[data-assignee-name]';
 
   // A reviewer's status in the sidebar is the same verdict as their review, drawn with a comment
   // bubble where the timeline has an eye. Awaiting a review is a dot, and is no verdict at all.
-  const REVIEWER_STATUS_SELECTOR = '.reviewers-status-icon';
+  const REVIEWER_STATUS_SELECTOR = '.reviewers-status-icon, [class*="statusIcon__"]';
   const REVIEWER_ICONS = REVIEW_ICONS.concat([['commented', '.octicon-comment']]);
 
   const THREAD_SELECTOR = [
@@ -388,7 +404,19 @@
     return match ? match[0] : '';
   }
 
+  // A dismissed review reads "previously approved". It is no longer a verdict, so like any line
+  // this cannot read it counts as the plainest kind.
+  function reviewArticleOutcome(article) {
+    const header = article.querySelector(REVIEW_ARTICLE_HEADER_SELECTOR);
+    const said = header ? Array.from(header.querySelectorAll('span'), (span) => (span.textContent || '').trim().toLowerCase()) : [];
+    const match = REVIEW_ARTICLE_WORDS.find(([, words]) => said.some((text) => words.test(text)));
+    return match ? match[0] : 'commented';
+  }
+
   function reviewOutcome(row) {
+    const article = (row.matches && row.matches(REVIEW_ARTICLE_SELECTOR) && row) || row.querySelector(REVIEW_ARTICLE_SELECTOR);
+    if (article) return reviewArticleOutcome(article);
+
     if (!REVIEW_GID.test(rowGid(row))) return '';
 
     // A badge this cannot read is still a review, so it counts as the plainest kind.
@@ -428,7 +456,8 @@
         review,
         routine: isRoutineComment(row, nodes, rules),
         login: spoken.author.login,
-        avatar: spoken.author.avatarSrc
+        avatar: spoken.author.avatarSrc,
+        time: writtenAt(row)
       };
     }
 
@@ -455,6 +484,12 @@
     if (!rules.hiddenComments.size || nodes.length > 1) return false;
     const body = row.querySelector(COMMENT_BODY_SELECTOR);
     return Boolean(body) && rules.hiddenComments.has(normalizePhrase(body.textContent || ''));
+  }
+
+  // The first timestamp on a row is its own: a comment's body carries none, and replies come later.
+  function writtenAt(row) {
+    const stamp = row.querySelector(TIME_SELECTOR);
+    return stamp ? stamp.getAttribute('datetime') || '' : '';
   }
 
   function reviewVerdict(review) {

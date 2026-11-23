@@ -326,6 +326,19 @@ if (process.argv.includes('--serve')) {
     assert.equal(quiet.rows['codex-request'].visible, false, 'a bare "@codex review" goes with the bots');
     assert.equal(quiet.rows['codex-request-more'].visible, true, 'one that says more stays');
 
+    // The new pull request overview draws a review as an <article>, with its verdict in the header.
+    assert.deepEqual(quiet.rows['overview-review-new'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
+      'a bot approval on the new overview is a kept review, not an event that vanishes');
+    assert.equal(quiet.strips['overview-review-new'].preview, 'approved these changes');
+    assert.equal(quiet.strips['overview-review-new'].title, 'Show this review');
+    assert.deepEqual(quiet.rows['overview-review-old'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
+      'a dismissed approval is no verdict any more, so it folds like a bot comment');
+    assert.equal(quiet.strips['overview-review-old'].preview, 'reviewed');
+    assert.deepEqual(quiet.rows['overview-human-review'], uncollapsed({ actor: 'human', form: 'comment', pinned: false, visible: true }),
+      'a person\'s approval there stays, comment or no comment');
+    assert.deepEqual(quiet.rows['overview-commit'], uncollapsed({ actor: 'none', form: 'commit', pinned: false, visible: true }));
+    assert.equal(quiet.rows['overview-thread'].visible, true, 'a collapsed review thread names no author to go by, so it stays');
+
     // Commits belong to nobody, so hiding bots never takes them.
     assert.deepEqual(quiet.rows['human-commit'], uncollapsed({ actor: 'none', form: 'commit', pinned: false, visible: true }));
     assert.deepEqual(quiet.rows['bot-commit'], uncollapsed({ actor: 'none', form: 'commit', pinned: false, visible: true }));
@@ -453,6 +466,15 @@ if (process.argv.includes('--serve')) {
     assert.equal(everyVerdict.strips['stamphog-old'].more, '+1 more');
     await settings({ latestOnlyBots: 'stamphog' });
     await until('only the latest stamphog verdict to come back', (state) => !state.rows['stamphog-old'].visible && state.rows['stamphog-new'].fold === null);
+
+    // The new overview lists the newest first, so the latest verdict is the one with the latest
+    // timestamp, not the last one on the page.
+    await settings({ latestOnlyBots: 'verdict-bot' });
+    const newestFirst = await until('the earlier verdict on the new overview to go', (state) => !state.rows['overview-review-old'].visible);
+    assert.equal(newestFirst.rows['overview-review-new'].visible, true, 'the newest verdict stays, though it comes first on the page');
+    assert.equal(newestFirst.rows['overview-review-new'].fold, null, 'and stays whole');
+    await settings({ latestOnlyBots: 'stamphog' });
+    await until('the overview verdicts to fold again', (state) => state.rows['overview-review-old'].fold === 'strip' && state.rows['overview-review-new'].fold === 'strip');
 
     await clickToggle('bots');
     const eventsOnly = await until('the bots to come back while events stay hidden', (state) => !state.hiding.bots.on);
@@ -631,6 +653,31 @@ if (process.argv.includes('--serve')) {
     assert.equal(noBots.hiding.bots.on, true, 'the button stays on, it just has nothing to do');
     assert.equal(noBots.hiding.events.lit, true, 'the events button is still lit');
     assert.equal(noBots.rows['pr-body'].visible, true, 'the description is still there');
+
+    // The new overview's Reviewers section is a labelled <section> of list rows, with no form.
+    await evaluate(`(() => {
+      document.querySelector('.js-issue-sidebar-form').remove();
+      const reviewer = (row, href, name, icon) =>
+        '<li class="reviewerRow__GGvypX" data-row="' + row + '">' +
+        '<span class="reviewerIdentityGroup__T4IAow"><a class="reviewerIdentity__UzEbKQ" href="' + href + '"><span class="reviewerName__kuuPXF">' + name + '</span></a></span>' +
+        '<span class="indicators__g13EPv"><a class="statusIcon__gxAEMz" href="/PostHog/posthog/pull/1/changes/abc"><svg class="octicon octicon-' + icon + '"></svg></a></span>' +
+        '</li>';
+      const section = document.createElement('section');
+      section.setAttribute('aria-label', 'Reviewers');
+      section.innerHTML = '<h4 class="disclosureHeading__ngTxJB"><button><span class="sectionTitle__QwlXiE">Reviewers</span></button></h4><ul class="reviewerList__XUeF5Q">' +
+        reviewer('overview-reviewer-person', '/gantoine', 'gantoine', 'check') +
+        reviewer('overview-reviewer-bot', '/apps/lint-helper', 'lint-helper[bot]', 'comment') +
+        reviewer('overview-reviewer-approving-bot', '/apps/review-gate', 'review-gate[bot]', 'check') +
+        reviewer('overview-reviewer-latest-only', '/apps/stamphog', 'stamphog[bot]', 'comment') +
+        '</ul>';
+      document.body.appendChild(section);
+    })()`);
+    const sidebar = await until('the new Reviewers section to be read', (state) => Boolean(state.rows['overview-reviewer-bot'].actor));
+    assert.deepEqual(sidebar.rows['overview-reviewer-person'], uncollapsed({ actor: 'human', form: 'reviewer', pinned: false, visible: true }));
+    assert.deepEqual(sidebar.rows['overview-reviewer-bot'], uncollapsed({ actor: 'bot', form: 'reviewer', pinned: false, visible: false }),
+      'a bot that only commented leaves the new Reviewers section with the bots');
+    assert.equal(sidebar.rows['overview-reviewer-approving-bot'].visible, true, 'a bot whose approval is kept stays there');
+    assert.equal(sidebar.rows['overview-reviewer-latest-only'].visible, true, 'and so does a bot whose latest verdict is kept');
 
     await evaluate(`new Promise((resolve) => {
       const script = document.createElement('script');
