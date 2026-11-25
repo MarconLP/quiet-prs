@@ -59,6 +59,7 @@ Authorship is decided in this order, and the first rule that matches wins:
 - Badges are read next to the author only, not anywhere in the row, so an event like "you requested a review from Copilot" survives **Hide bots**: it is your action, not the bot's.
 - A comment box with no author of its own, such as a collapsed "Show resolved" thread, does not vote on who wrote the row it sits in.
 - A review whose threads are still collapsed counts as a comment, not a timeline event, so a bot review is something you can open rather than something that simply goes.
+- On the new pull request page a review thread can stand on its own row, folded to a file and a line with no author shown. Its label still names who started it, so a bot's thread folds with the bots.
 - The "Mention @copilot in a comment to make changes" note GitHub parks on an agent's pull request has no author, but it goes with the bots.
 
 Accounts that comment through a personal access token (some Codecov and internal release setups) carry no bot signal at all. Add those under *Extra bot accounts*.

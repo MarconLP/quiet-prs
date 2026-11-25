@@ -337,7 +337,12 @@ if (process.argv.includes('--serve')) {
     assert.deepEqual(quiet.rows['overview-human-review'], uncollapsed({ actor: 'human', form: 'comment', pinned: false, visible: true }),
       'a person\'s approval there stays, comment or no comment');
     assert.deepEqual(quiet.rows['overview-commit'], uncollapsed({ actor: 'none', form: 'commit', pinned: false, visible: true }));
-    assert.equal(quiet.rows['overview-thread'].visible, true, 'a collapsed review thread names no author to go by, so it stays');
+    assert.deepEqual(quiet.rows['overview-thread'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
+      'a folded review thread shows no author, but its label names the bot, so it folds with the bots');
+    assert.equal(quiet.logins['overview-thread'], 'verdict-bot');
+    assert.equal(quiet.strips['overview-thread'].preview, 'src/batching.py Line 12', 'and its strip says which line it is about');
+    assert.equal(quiet.rows['overview-human-thread'].actor, 'human');
+    assert.equal(quiet.rows['overview-human-thread'].visible, true, 'a person\'s thread stays');
 
     // Commits belong to nobody, so hiding bots never takes them.
     assert.deepEqual(quiet.rows['human-commit'], uncollapsed({ actor: 'none', form: 'commit', pinned: false, visible: true }));
@@ -473,6 +478,7 @@ if (process.argv.includes('--serve')) {
     const newestFirst = await until('the earlier verdict on the new overview to go', (state) => !state.rows['overview-review-old'].visible);
     assert.equal(newestFirst.rows['overview-review-new'].visible, true, 'the newest verdict stays, though it comes first on the page');
     assert.equal(newestFirst.rows['overview-review-new'].fold, null, 'and stays whole');
+    assert.equal(newestFirst.rows['overview-thread'].fold, 'strip', 'its review thread is no verdict, so that folds like any bot comment');
     await settings({ latestOnlyBots: 'stamphog' });
     await until('the overview verdicts to fold again', (state) => state.rows['overview-review-old'].fold === 'strip' && state.rows['overview-review-new'].fold === 'strip');
 
@@ -678,6 +684,28 @@ if (process.argv.includes('--serve')) {
       'a bot that only commented leaves the new Reviewers section with the bots');
     assert.equal(sidebar.rows['overview-reviewer-approving-bot'].visible, true, 'a bot whose approval is kept stays there');
     assert.equal(sidebar.rows['overview-reviewer-latest-only'].visible, true, 'and so does a bot whose latest verdict is kept');
+
+    // The new overview can draw its sidebar before its conversation. Finding the one must not stop
+    // the look for the other.
+    await evaluate(`document.querySelector('.js-discussion').remove()`);
+    await new Promise((resolve) => setTimeout(resolve, 400));
+    await evaluate(`(() => {
+      const item = (row, body) => '<div data-testid="timeline-item" data-item-type="issue" data-row="' + row + '">' + body + '</div>';
+      const comment = (id, href, name) =>
+        '<article id="issuecomment-' + id + '"><div data-testid="comment-header">' +
+        '<div data-testid="comment-header-left-side-items"><a data-testid="avatar-link" href="' + href + '">' + name + '</a></div>' +
+        '<div data-testid="comment-header-right-side-items"></div></div>' +
+        '<div class="markdown-body"><p>Arrived after the sidebar.</p></div></article>';
+      const stack = document.createElement('div');
+      stack.innerHTML =
+        item('late-timeline-bot', comment(9101, '/apps/lint-helper', 'lint-helper')) +
+        item('late-timeline-human', comment(9102, '/gantoine', 'gantoine'));
+      document.body.insertBefore(stack, document.querySelector('section[aria-label="Reviewers"]'));
+    })()`);
+    const lateTimeline = await until('a conversation drawn after the sidebar to be read', (state) => Boolean(state.rows['late-timeline-bot'].actor));
+    assert.deepEqual(lateTimeline.rows['late-timeline-bot'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
+      'a bot comment in a conversation that turns up late still folds');
+    assert.deepEqual(lateTimeline.rows['late-timeline-human'], uncollapsed({ actor: 'human', form: 'comment', pinned: false, visible: true }));
 
     await evaluate(`new Promise((resolve) => {
       const script = document.createElement('script');
