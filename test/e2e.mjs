@@ -700,7 +700,7 @@ if (process.argv.includes('--serve')) {
       stack.innerHTML =
         item('late-timeline-bot', comment(9101, '/apps/lint-helper', 'lint-helper')) +
         item('late-timeline-human', comment(9102, '/gantoine', 'gantoine'));
-      document.body.insertBefore(stack, document.querySelector('section[aria-label="Reviewers"]'));
+      document.body.append(stack);
     })()`);
     const lateTimeline = await until('a conversation drawn after the sidebar to be read', (state) => Boolean(state.rows['late-timeline-bot'].actor));
     assert.deepEqual(lateTimeline.rows['late-timeline-bot'], { actor: 'bot', form: 'comment', pinned: false, visible: true, fold: 'strip' },
