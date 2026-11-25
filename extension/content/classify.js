@@ -153,6 +153,12 @@
     ['changes', /^(?:requested|suggested) changes$/]
   ];
 
+  // A review thread that stands alone on the new overview is a row of its own. Folded, it shows a
+  // file and a line and no author at all; only its label says who started it.
+  const REVIEW_THREAD_SELECTOR = '[data-testid="review-thread-focus-target"]';
+  const REVIEW_THREAD_LABEL = /^review comment by\s+(.+)$/i;
+  const REVIEW_THREAD_SUBJECT_SELECTOR = 'h2';
+
   // When a row was written, wherever GitHub puts the timestamp.
   const TIME_SELECTOR = 'relative-time[datetime], time[datetime]';
 
@@ -413,9 +419,30 @@
     return match ? match[0] : 'commented';
   }
 
+  function reviewThread(row) {
+    return (row.matches && row.matches(REVIEW_THREAD_SELECTOR) && row) || row.querySelector(REVIEW_THREAD_SELECTOR);
+  }
+
+  // Who started the thread, from its label: "Review comment by some-app[bot]".
+  function threadStarter(thread) {
+    const match = (thread.getAttribute('aria-label') || '').trim().match(REVIEW_THREAD_LABEL);
+    const raw = match ? match[1].trim() : '';
+    return { login: normalizeLogin(raw), suffixedBot: /\[bot\]\s*$/i.test(raw) };
+  }
+
+  // The file and line a folded thread is about, which is all it shows of itself.
+  function threadSubject(row) {
+    const thread = reviewThread(row);
+    const heading = thread && thread.querySelector(REVIEW_THREAD_SUBJECT_SELECTOR);
+    return heading ? (heading.textContent || '').replace(/[\u200e\u200f]/g, '').replace(/\s+/g, ' ').trim() : '';
+  }
+
   function reviewOutcome(row) {
     const article = (row.matches && row.matches(REVIEW_ARTICLE_SELECTOR) && row) || row.querySelector(REVIEW_ARTICLE_SELECTOR);
     if (article) return reviewArticleOutcome(article);
+
+    // A thread on its own is part of a review that said something and decided nothing.
+    if (reviewThread(row)) return 'commented';
 
     if (!REVIEW_GID.test(rowGid(row))) return '';
 
@@ -445,6 +472,10 @@
         .filter((entry) => entry.author.login);
       if (!written.length) written = [{ node: row, author: readAuthor(row, rail) }];
 
+      // Folded, a thread on its own names nobody in its markup, so its label speaks for it.
+      const thread = nodes.length ? null : reviewThread(row);
+      if (thread && !written[0].author.login) written = [{ node: row, author: threadStarter(thread) }];
+
       const kinds = written.map((entry) => classifyAuthor(entry.author, rules));
       const actor = kinds.includes('human') ? 'human' : 'bot';
       // The face on a collapsed row has to be the author it speaks for, not whoever posted first.
@@ -454,6 +485,7 @@
         actor,
         form: 'comment',
         review,
+        thread: Boolean(thread),
         routine: isRoutineComment(row, nodes, rules),
         login: spoken.author.login,
         avatar: spoken.author.avatarSrc,
@@ -499,7 +531,7 @@
   function commentPreview(row, review) {
     const body = row.querySelector(COMMENT_BODY_SELECTOR);
     const said = body ? (body.textContent || '').replace(/\s+/g, ' ').trim() : '';
-    const text = said || reviewVerdict(review);
+    const text = said || threadSubject(row) || reviewVerdict(review);
     return text.length > PREVIEW_LIMIT ? `${text.slice(0, PREVIEW_LIMIT).trimEnd()}\u2026` : text;
   }
 

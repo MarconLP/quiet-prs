@@ -111,20 +111,24 @@
     return want ? want === 'open' : !hide.bots;
   }
 
+  const TARGET_KINDS = [
+    { find: lanes.findTimelineRoot, rowsOf: lanes.timelineRows },
+    { find: lanes.findFilesRoot, rowsOf: lanes.threadRows },
+    { find: lanes.findReviewersRoot, rowsOf: lanes.reviewerRows, classify: lanes.classifyReviewer }
+  ];
+
+  // Each part of the page is looked for until it turns up. The new pull request overview can draw
+  // the sidebar before the conversation, so having found one says nothing about the others.
   function collectTargets() {
-    if (targets && targets.every((target) => target.root.isConnected)) return targets;
+    if (!targets) targets = TARGET_KINDS.map(() => null);
 
-    const found = [];
-    const timeline = lanes.findTimelineRoot(document);
-    if (timeline) found.push({ root: timeline, rowsOf: lanes.timelineRows });
-    const files = lanes.findFilesRoot(document);
-    if (files) found.push({ root: files, rowsOf: lanes.threadRows });
+    TARGET_KINDS.forEach((kind, index) => {
+      if (targets[index] && targets[index].root.isConnected) return;
+      const root = kind.find(document);
+      targets[index] = root ? { root, rowsOf: kind.rowsOf, classify: kind.classify } : null;
+    });
 
-    const reviewers = lanes.findReviewersRoot(document);
-    if (reviewers) found.push({ root: reviewers, rowsOf: lanes.reviewerRows, classify: lanes.classifyReviewer });
-
-    targets = found.length ? found : null;
-    return found;
+    return targets.filter(Boolean);
   }
 
   function setData(element, key, value) {
@@ -244,10 +248,12 @@
   // Their earlier comments and reviews go altogether while the bots are hidden; the latest stays whole.
   function markLatest(rows) {
     const latest = new Map();
+    // A review thread is no verdict, so it never stands for a bot's latest one.
     const candidates = new Set(rows.filter((row) =>
       row.dataset.prlanesActor === 'bot' &&
       row.dataset.prlanesForm === 'comment' &&
       row.dataset.prlanesPin !== '1' &&
+      row.dataset.prlanesThread !== '1' &&
       rules.latestOnly.has(row.dataset.prlanesLogin || '')
     ));
     for (const row of candidates) {
@@ -281,6 +287,8 @@
         else delete row.dataset.prlanesKeep;
         if (kind.routine) setData(row, 'prlanesRoutine', '1');
         else delete row.dataset.prlanesRoutine;
+        if (kind.thread) setData(row, 'prlanesThread', '1');
+        else delete row.dataset.prlanesThread;
         if (kind.time) setData(row, 'prlanesTime', kind.time);
         else delete row.dataset.prlanesTime;
         fillStrip(row, kind);
